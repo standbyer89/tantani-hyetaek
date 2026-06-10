@@ -367,26 +367,35 @@
       font-weight: 700;
     }
 
-    /* ── VIEW TOGGLE ── */
-    .view-toggle {
+    /* ── TAB NAV ── */
+    .tab-nav {
       display: flex;
-      gap: 8px;
-      padding: 0 16px 12px;
-      justify-content: center;
-    }
-    .view-btn {
-      border: 1.5px solid var(--pink);
       background: white;
-      color: var(--pink);
-      border-radius: 20px;
-      padding: 6px 18px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
-      letter-spacing: -0.3px;
+      border-bottom: 2.5px solid var(--pink-light);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      box-shadow: 0 2px 10px rgba(240,98,146,0.08);
     }
-    .view-btn.active { background: var(--pink); color: white; }
+    .tab-btn {
+      flex: 1;
+      padding: 15px 4px 13px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 800;
+      color: #c0c0c0;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2.5px;
+      transition: all 0.18s;
+      letter-spacing: -0.4px;
+      line-height: 1.4;
+      font-family: inherit;
+    }
+    .tab-btn .tab-icon { font-size: 16px; display: block; margin-bottom: 2px; }
+    .tab-btn.active { color: var(--pink); border-bottom-color: var(--pink); }
+    .tab-btn:hover:not(.active) { color: #F48FB1; }
 
     /* ── WEEKLY VIEW ── */
     #weeklyView { display: none; padding: 4px 16px 24px; }
@@ -485,25 +494,32 @@
 </div>
 <div class="search-meta" id="searchMeta"></div>
 
-<div class="view-toggle">
-  <button class="view-btn active" id="btnCardView">📋 혜택 카드</button>
-  <button class="view-btn" id="btnWeekView">📅 주차별 타임라인</button>
-</div>
+<nav class="tab-nav">
+  <button class="tab-btn active" id="tabBenefit">
+    <span class="tab-icon">📋</span>혜택 카드
+  </button>
+  <button class="tab-btn" id="tabWeekly">
+    <span class="tab-icon">📅</span>주차별 타임라인
+  </button>
+  <button class="tab-btn" id="tabCommunity">
+    <span class="tab-icon">💬</span>커뮤니티 꿀팁
+  </button>
+</nav>
 
 <div id="cardView">
   <div class="filter-bar">
-    <button class="filter-btn active" data-cat="all">전체 30</button>
+    <button class="filter-btn active" data-cat="all">전체 15</button>
     <button class="filter-btn" data-cat="medical">🏥 의료·건강</button>
     <button class="filter-btn" data-cat="financial">💰 재정·바우처</button>
     <button class="filter-btn" data-cat="service">🛎 서비스</button>
     <button class="filter-btn" data-cat="transport">🚆 교통·할인</button>
     <button class="filter-btn" data-cat="misc">✨ 기타혜택</button>
-    <button class="filter-btn" data-cat="community">💬 커뮤니티 꿀팁</button>
   </div>
   <div class="grid" id="grid"></div>
 </div>
 
 <div id="weeklyView"></div>
+<div id="communityView" style="display:none"></div>
 
 <footer>
   마지막 업데이트: 2026-06-09 &nbsp;·&nbsp; 출처: 돈시육아 유튜브 + 반값보험료만들기 유튜브 + 임산부 커뮤니티 대화방<br>
@@ -838,33 +854,48 @@ const data = [
   }
 ];
 
-// ── render grid ──────────────────────────────────────────
+// ── render grid (공식 혜택만) ─────────────────────────────
 function renderGrid(cat) {
   const grid = document.getElementById('grid');
-  const items = cat === 'all' ? data : data.filter(d => d.cat === cat);
+  const official = data.filter(d => d.cat !== 'community');
+  const items = cat === 'all' ? official : official.filter(d => d.cat === cat);
   if (!items.length) {
     grid.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div>해당 항목이 없습니다.</div>';
     return;
   }
-  let html = '';
-  let communityDividerAdded = false;
-  items.forEach(d => {
-    if (cat === 'all' && d.cat === 'community' && !communityDividerAdded) {
-      html += `<div class="community-divider"><span>💬 커뮤니티 꿀팁 (임산부 대화방 추출)</span></div>`;
-      communityDividerAdded = true;
-    }
-    const numLabel = d.id.startsWith('C') ? `커뮤니티 팁 ${d.id}` : `혜택 No.${d.id}`;
-    html += `
-      <div class="card cat-${d.cat}" onclick="openModal('${d.id}')" role="button" tabindex="0" aria-label="${d.title} 상세보기">
-        <div class="card-num">${numLabel}</div>
-        <div class="card-icon">${d.icon}</div>
-        <div class="card-title">${d.title}</div>
-        <div class="card-short">${d.short}</div>
-        <span class="cat-tag">${d.catLabel}</span>
-      </div>`;
-  });
-  grid.innerHTML = html;
+  grid.innerHTML = items.map(d => `
+    <div class="card cat-${d.cat}" onclick="openModal('${d.id}')" role="button" tabindex="0" aria-label="${d.title} 상세보기">
+      <div class="card-num">혜택 No.${d.id}</div>
+      <div class="card-icon">${d.icon}</div>
+      <div class="card-title">${d.title}</div>
+      <div class="card-short">${d.short}</div>
+      <span class="cat-tag">${d.catLabel}</span>
+    </div>`).join('');
   grid.querySelectorAll('.card').forEach(c => {
+    c.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') c.click(); });
+  });
+}
+
+// ── render community ──────────────────────────────────────
+function renderCommunity() {
+  const view = document.getElementById('communityView');
+  const tips = data.filter(d => d.cat === 'community');
+  view.innerHTML = `
+    <div style="background:linear-gradient(135deg,#26A69A,#4DB6AC);color:white;padding:16px 20px;margin-bottom:4px;">
+      <div style="font-size:18px;font-weight:800;margin-bottom:4px;">💬 커뮤니티 꿀팁</div>
+      <div style="font-size:11px;opacity:0.88;">임산부 대화방에서 직접 나눈 실전 경험담 모음</div>
+    </div>
+    <div class="grid" id="communityGrid">
+      ${tips.map(d => `
+        <div class="card cat-community" onclick="openModal('${d.id}')" role="button" tabindex="0">
+          <div class="card-num" style="color:#26A69A;">커뮤니티 팁 ${d.id}</div>
+          <div class="card-icon">${d.icon}</div>
+          <div class="card-title">${d.title}</div>
+          <div class="card-short">${d.short}</div>
+          <span class="cat-tag">커뮤니티 꿀팁</span>
+        </div>`).join('')}
+    </div>`;
+  view.querySelectorAll('.card').forEach(c => {
     c.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') c.click(); });
   });
 }
@@ -872,9 +903,7 @@ function renderGrid(cat) {
 // ── filter ───────────────────────────────────────────────
 document.querySelectorAll('.filter-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('searchClear').style.display = 'none';
-    document.getElementById('searchMeta').style.display = 'none';
+    clearSearch();
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     renderGrid(btn.dataset.cat);
@@ -897,6 +926,12 @@ function searchData(q) {
     ];
     return hay.some(f => f.toLowerCase().includes(lq));
   });
+}
+
+function clearSearch() {
+  searchInput.value = '';
+  searchClear.style.display = 'none';
+  searchMeta.style.display = 'none';
 }
 
 function renderSearchResults(items, q) {
@@ -929,11 +964,7 @@ searchInput.addEventListener('input', function() {
   const q = this.value.trim();
   searchClear.style.display = q ? 'flex' : 'none';
   if (q) {
-    // 검색 중엔 카드뷰로 전환
-    document.getElementById('cardView').style.display = '';
-    document.getElementById('weeklyView').style.display = 'none';
-    document.getElementById('btnCardView').classList.add('active');
-    document.getElementById('btnWeekView').classList.remove('active');
+    switchTab('benefit');
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     const results = searchData(q);
     searchMeta.style.display = 'block';
@@ -947,9 +978,7 @@ searchInput.addEventListener('input', function() {
 });
 
 searchClear.addEventListener('click', () => {
-  searchInput.value = '';
-  searchClear.style.display = 'none';
-  searchMeta.style.display = 'none';
+  clearSearch();
   document.querySelector('.filter-btn[data-cat="all"]').classList.add('active');
   renderGrid('all');
   searchInput.focus();
@@ -1139,23 +1168,38 @@ function toggleWeek(el) {
   el.classList.toggle('open');
 }
 
-// ── view toggle ───────────────────────────────────────────
-document.getElementById('btnCardView').addEventListener('click', () => {
-  document.getElementById('cardView').style.display = '';
-  document.getElementById('weeklyView').style.display = 'none';
-  document.getElementById('btnCardView').classList.add('active');
-  document.getElementById('btnWeekView').classList.remove('active');
-});
-document.getElementById('btnWeekView').addEventListener('click', () => {
-  document.getElementById('cardView').style.display = 'none';
-  document.getElementById('weeklyView').style.display = 'block';
-  document.getElementById('btnWeekView').classList.add('active');
-  document.getElementById('btnCardView').classList.remove('active');
-  if (!document.getElementById('weeklyView').innerHTML.trim()) renderWeekly();
-});
+// ── tab switching ─────────────────────────────────────────
+function switchTab(tab) {
+  // 뷰 숨김
+  document.getElementById('cardView').style.display      = 'none';
+  document.getElementById('weeklyView').style.display    = 'none';
+  document.getElementById('communityView').style.display = 'none';
+  // 탭 비활성화
+  ['tabBenefit','tabWeekly','tabCommunity'].forEach(id =>
+    document.getElementById(id).classList.remove('active'));
+
+  if (tab === 'benefit') {
+    document.getElementById('cardView').style.display = 'block';
+    document.getElementById('tabBenefit').classList.add('active');
+  } else if (tab === 'weekly') {
+    document.getElementById('weeklyView').style.display = 'block';
+    document.getElementById('tabWeekly').classList.add('active');
+    if (!document.getElementById('weeklyView').innerHTML.trim()) renderWeekly();
+  } else if (tab === 'community') {
+    document.getElementById('communityView').style.display = 'block';
+    document.getElementById('tabCommunity').classList.add('active');
+    if (!document.getElementById('communityView').innerHTML.trim()) renderCommunity();
+  }
+}
+
+document.getElementById('tabBenefit').addEventListener('click', () => { clearSearch(); switchTab('benefit'); document.querySelector('.filter-btn[data-cat="all"]').classList.add('active'); renderGrid('all'); });
+document.getElementById('tabWeekly').addEventListener('click',  () => { clearSearch(); switchTab('weekly'); });
+document.getElementById('tabCommunity').addEventListener('click',() => { clearSearch(); switchTab('community'); });
 
 // ── init ─────────────────────────────────────────────────
+switchTab('benefit');
 renderGrid('all');
+document.querySelector('.filter-btn[data-cat="all"]').classList.add('active');
 </script>
 </body>
 </html>

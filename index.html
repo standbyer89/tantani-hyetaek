@@ -314,6 +314,105 @@
       font-size: 14px;
     }
     .empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+    /* ── VIEW TOGGLE ── */
+    .view-toggle {
+      display: flex;
+      gap: 8px;
+      padding: 0 16px 12px;
+      justify-content: center;
+    }
+    .view-btn {
+      border: 1.5px solid var(--pink);
+      background: white;
+      color: var(--pink);
+      border-radius: 20px;
+      padding: 6px 18px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: -0.3px;
+    }
+    .view-btn.active { background: var(--pink); color: white; }
+
+    /* ── WEEKLY VIEW ── */
+    #weeklyView { display: none; padding: 4px 16px 24px; }
+    .trimester-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: white;
+      background: linear-gradient(135deg, #EC407A 0%, #F48FB1 100%);
+      padding: 9px 16px;
+      border-radius: 12px;
+      margin: 16px 0 8px;
+      letter-spacing: -0.3px;
+    }
+    .week-item {
+      background: white;
+      border-radius: 14px;
+      margin-bottom: 8px;
+      border: 1.5px solid var(--border);
+      overflow: hidden;
+      cursor: pointer;
+      transition: box-shadow 0.2s;
+    }
+    .week-item:hover { box-shadow: 0 4px 16px rgba(240,98,146,0.12); }
+    .week-header {
+      display: flex;
+      align-items: center;
+      padding: 13px 14px;
+      gap: 10px;
+      user-select: none;
+    }
+    .week-num {
+      background: var(--pink-light);
+      color: var(--pink-dark);
+      font-weight: 800;
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 10px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .week-title { font-weight: 700; font-size: 13px; flex: 1; }
+    .week-arrow { color: var(--text-light); font-size: 11px; transition: transform 0.2s; flex-shrink: 0; }
+    .week-item.open .week-arrow { transform: rotate(90deg); }
+    .week-body { display: none; padding: 0 14px 13px; border-top: 1px solid var(--pink-light); }
+    .week-item.open .week-body { display: block; }
+    .week-task {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 7px 0;
+      font-size: 12.5px;
+      border-bottom: 1px solid #FFF0F5;
+      line-height: 1.5;
+    }
+    .week-task:last-child { border-bottom: none; }
+    .week-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--pink); margin-top: 5px; flex-shrink: 0; }
+    .week-dot.urgent { background: #EF5350; }
+    .week-tag {
+      display: inline-block;
+      font-size: 10px;
+      padding: 1px 7px;
+      border-radius: 8px;
+      font-weight: 700;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 3px;
+    }
+    .week-tag.must { background: #FFE0E0; color: #C62828; }
+    .week-tag.free { background: #E8F5E9; color: #2E7D32; }
+    .week-tag.tip  { background: #E0F2F1; color: #00695C; }
+    .week-legend {
+      display: flex;
+      gap: 10px;
+      padding: 8px 0 4px;
+      font-size: 11px;
+      flex-wrap: wrap;
+    }
+    .week-legend span { display: flex; align-items: center; gap: 4px; }
   </style>
 </head>
 <body>
@@ -328,17 +427,25 @@
   </div>
 </header>
 
-<div class="filter-bar">
-  <button class="filter-btn active" data-cat="all">전체 30</button>
-  <button class="filter-btn" data-cat="medical">🏥 의료·건강</button>
-  <button class="filter-btn" data-cat="financial">💰 재정·바우처</button>
-  <button class="filter-btn" data-cat="service">🛎 서비스</button>
-  <button class="filter-btn" data-cat="transport">🚆 교통·할인</button>
-  <button class="filter-btn" data-cat="misc">✨ 기타혜택</button>
-  <button class="filter-btn" data-cat="community">💬 커뮤니티 꿀팁</button>
+<div class="view-toggle">
+  <button class="view-btn active" id="btnCardView">📋 혜택 카드</button>
+  <button class="view-btn" id="btnWeekView">📅 주차별 타임라인</button>
 </div>
 
-<div class="grid" id="grid"></div>
+<div id="cardView">
+  <div class="filter-bar">
+    <button class="filter-btn active" data-cat="all">전체 30</button>
+    <button class="filter-btn" data-cat="medical">🏥 의료·건강</button>
+    <button class="filter-btn" data-cat="financial">💰 재정·바우처</button>
+    <button class="filter-btn" data-cat="service">🛎 서비스</button>
+    <button class="filter-btn" data-cat="transport">🚆 교통·할인</button>
+    <button class="filter-btn" data-cat="misc">✨ 기타혜택</button>
+    <button class="filter-btn" data-cat="community">💬 커뮤니티 꿀팁</button>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<div id="weeklyView"></div>
 
 <footer>
   마지막 업데이트: 2026-06-09 &nbsp;·&nbsp; 출처: 돈시육아 유튜브 + 반값보험료만들기 유튜브 + 임산부 커뮤니티 대화방<br>
@@ -753,6 +860,164 @@ document.getElementById('overlay').addEventListener('click', e => {
 });
 document.getElementById('closeBtn').addEventListener('click', closeModal);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ── weekly data ──────────────────────────────────────────
+const weeklyData = [
+  {
+    trimester: '🌸 1분기 (4~12주)',
+    weeks: [
+      {
+        range: '4~7주',
+        title: '임신 확인 & 등록',
+        tasks: [
+          { text: '산부인과 첫 방문 — 임신확인서 발급', tag: 'must' },
+          { text: '국민건강보험공단 임산부 등록', tag: 'must' },
+          { text: '엽산 복용 시작 (800mcg / 보건소 무료 지급)', tag: 'must' },
+          { text: '비타민D 복용 시작 (2000IU)', tag: 'tip' },
+          { text: '임산부 뱃지 신청 (지하철 앱 또는 지자체)', tag: 'free' },
+          { text: '태아보험 가입 준비 — 설계사 상담 시작', tag: 'tip' },
+        ]
+      },
+      {
+        range: '8~12주',
+        title: '보험·조리원 예약 황금 타이밍 ⚡',
+        tasks: [
+          { text: '태아보험 가입 완료 — 기형아검사(니프티) 받기 전 필수!', tag: 'must' },
+          { text: '태아 실비보험 가입 (보험다모아 e-insmart.or.kr)', tag: 'must' },
+          { text: '산후조리원 상담·예약 시작', tag: 'must' },
+          { text: '입덧 심하면 입덧약 처방 받기 (디클렉틴·이지모닝 등)', tag: 'tip' },
+          { text: '친환경 농산물 꾸러미 신청 (지자체별, 예산 소진 빠름)', tag: 'free' },
+        ]
+      },
+    ]
+  },
+  {
+    trimester: '🌿 2분기 (13~27주)',
+    weeks: [
+      {
+        range: '13~16주',
+        title: '혜택 신청 & 회사 임밍아웃',
+        tasks: [
+          { text: '국민행복카드 신청 (임신·출산 진료비 100만원)', tag: 'free' },
+          { text: '철분제 보건소 무료 처방 (16주부터)', tag: 'free' },
+          { text: '회사 임밍아웃 + 모성보호시간 신청 (하루 2시간 단축)', tag: 'must' },
+          { text: '임신부 교통카드 K패스 신청', tag: 'free' },
+          { text: '치과 스케일링 — 임산부 할인으로 5천원대', tag: 'tip' },
+          { text: '오메가3 복용 시작 (단, 출산 1~2달 전 반드시 끊기)', tag: 'tip' },
+        ]
+      },
+      {
+        range: '17~20주',
+        title: '정밀 초음파 & 지원금 확인',
+        tasks: [
+          { text: '정밀 초음파 (기형아 정밀검사)', tag: 'must' },
+          { text: '임신축하금 지역별 확인 (아이사랑 childcare.go.kr)', tag: 'free' },
+          { text: '서울 35세↑ 추가 의료비 50만원 신청 (몽땅정보만능키)', tag: 'free' },
+          { text: '아기용품 리스트 작성 시작', tag: 'tip' },
+          { text: '카시트·침대 등 큰 용품 미리 조사', tag: 'tip' },
+        ]
+      },
+      {
+        range: '21~27주',
+        title: '임당검사 & 중기 건강관리',
+        tasks: [
+          { text: '임신성 당뇨 검사 (24~28주, 50g 포도당 검사)', tag: 'must' },
+          { text: '수영·산책 등 운동 시작 (안정기 이후 권장)', tag: 'tip' },
+          { text: '산후도우미 예약 (출산 3개월 전)', tag: 'must' },
+          { text: '카시트·아기침대 구매 (카시트는 반드시 새것!)', tag: 'tip' },
+          { text: '국민행복카드 잔액 확인 — 진료비 사용 챙기기', tag: 'free' },
+        ]
+      },
+    ]
+  },
+  {
+    trimester: '🌺 3분기 (28~40주)',
+    weeks: [
+      {
+        range: '28~32주',
+        title: '출산 준비 시작',
+        tasks: [
+          { text: '출산 가방 준비 시작', tag: 'must' },
+          { text: '왁싱 — 28주, 32주 (임산부 전용 샵)', tag: 'tip' },
+          { text: '분만 방식 산부인과 상담 (자연분만·제왕절개)', tag: 'must' },
+          { text: '마지막 여행 — 체력 있을 때 다녀오기', tag: 'tip' },
+          { text: '궁궐·왕릉 무료 입장 활용', tag: 'free' },
+        ]
+      },
+      {
+        range: '33~36주',
+        title: '막달 준비 & 육아휴직 신청',
+        tasks: [
+          { text: '육아휴직 신청 (회사 최소 30일 전 제출)', tag: 'must' },
+          { text: '오메가3 중단 — 출산 1~2달 전 반드시 끊기!', tag: 'must' },
+          { text: '왁싱 — 36주 (마지막)', tag: 'tip' },
+          { text: '출산 병원 최종 확인·예약', tag: 'must' },
+          { text: '신생아 용품 최종 점검 (속싸개·배냇저고리 등)', tag: 'tip' },
+        ]
+      },
+      {
+        range: '37~40주',
+        title: '만삭 & 출산 직전',
+        tasks: [
+          { text: '오메가3 완전 중단 확인', tag: 'must' },
+          { text: '입원 준비물 가방 최종 점검', tag: 'must' },
+          { text: '호흡법·분만 준비 연습', tag: 'tip' },
+          { text: '공항 패스트트랙 — 마지막 여행 계획 있다면 활용', tag: 'free' },
+          { text: '성심당(대전) 임산부 줄 없이 입장·5% 할인', tag: 'free' },
+        ]
+      },
+    ]
+  },
+];
+
+// ── render weekly ─────────────────────────────────────────
+function renderWeekly() {
+  const view = document.getElementById('weeklyView');
+  const legendHtml = `
+    <div class="week-legend">
+      <span><span class="week-tag must">필수</span> 꼭 해야 할 것</span>
+      <span><span class="week-tag free">무료·지원</span> 챙길 수 있는 혜택</span>
+      <span><span class="week-tag tip">꿀팁</span> 커뮤니티 추천</span>
+    </div>`;
+  view.innerHTML = legendHtml + weeklyData.map(tri => `
+    <div class="trimester-title">${tri.trimester}</div>
+    ${tri.weeks.map(w => `
+      <div class="week-item" onclick="toggleWeek(this)">
+        <div class="week-header">
+          <span class="week-num">${w.range}</span>
+          <span class="week-title">${w.title}</span>
+          <span class="week-arrow">▶</span>
+        </div>
+        <div class="week-body">
+          ${w.tasks.map(t => `
+            <div class="week-task">
+              <div class="week-dot${t.tag==='must'?' urgent':''}"></div>
+              <span>${t.text}</span>
+              <span class="week-tag ${t.tag}">${t.tag==='must'?'필수':t.tag==='free'?'무료·지원':'꿀팁'}</span>
+            </div>`).join('')}
+        </div>
+      </div>`).join('')}
+  `).join('');
+}
+
+function toggleWeek(el) {
+  el.classList.toggle('open');
+}
+
+// ── view toggle ───────────────────────────────────────────
+document.getElementById('btnCardView').addEventListener('click', () => {
+  document.getElementById('cardView').style.display = '';
+  document.getElementById('weeklyView').style.display = 'none';
+  document.getElementById('btnCardView').classList.add('active');
+  document.getElementById('btnWeekView').classList.remove('active');
+});
+document.getElementById('btnWeekView').addEventListener('click', () => {
+  document.getElementById('cardView').style.display = 'none';
+  document.getElementById('weeklyView').style.display = '';
+  document.getElementById('btnWeekView').classList.add('active');
+  document.getElementById('btnCardView').classList.remove('active');
+  if (!document.getElementById('weeklyView').innerHTML) renderWeekly();
+});
 
 // ── init ─────────────────────────────────────────────────
 renderGrid('all');

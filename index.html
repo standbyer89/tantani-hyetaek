@@ -1013,10 +1013,10 @@ document.getElementById('btnCardView').addEventListener('click', () => {
 });
 document.getElementById('btnWeekView').addEventListener('click', () => {
   document.getElementById('cardView').style.display = 'none';
-  document.getElementById('weeklyView').style.display = '';
+  document.getElementById('weeklyView').style.display = 'block';
   document.getElementById('btnWeekView').classList.add('active');
   document.getElementById('btnCardView').classList.remove('active');
-  if (!document.getElementById('weeklyView').innerHTML) renderWeekly();
+  if (!document.getElementById('weeklyView').innerHTML.trim()) renderWeekly();
 });
 
 // ── init ─────────────────────────────────────────────────

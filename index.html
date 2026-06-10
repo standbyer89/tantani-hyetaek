@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>임산부 혜택 완전정복 2026</title>
+  <style>
+    :root {
+      --pink: #F06292;
+      --pink-light: #FCE4EC;
+      --pink-dark: #C2185B;
+      --bg: #FFF8FA;
+      --card-bg: #FFFFFF;
+      --text: #2C2C2C;
+      --text-light: #888;
+      --border: #F8BBD0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: linear-gradient(135deg, #EC407A 0%, #F48FB1 60%, #FFB3C6 100%);
+      color: white;
+      padding: 28px 20px 24px;
+      text-align: center;
+    }
+    header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; }
+    header p { font-size: 12px; opacity: 0.88; }
+    .badge-row { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
+    .badge {
+      background: rgba(255,255,255,0.22);
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* ── FILTER BAR ── */
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      background: white;
+      border-bottom: 1px solid var(--border);
+      scrollbar-width: none;
+    }
+    .filter-bar::-webkit-scrollbar { display: none; }
+    .filter-btn {
+      padding: 7px 16px;
+      border-radius: 20px;
+      border: 1.5px solid #eee;
+      background: white;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      font-family: inherit;
+      color: #555;
+    }
+    .filter-btn:hover { border-color: var(--pink); color: var(--pink); }
+    .filter-btn.active { background: var(--pink); color: white; border-color: var(--pink); font-weight: 700; }
+
+    /* ── GRID ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+      gap: 12px;
+      padding: 16px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--card-bg);
+      border-radius: 18px;
+      padding: 18px 14px 14px;
+      cursor: pointer;
+      border: 1.5px solid var(--border);
+      transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+      position: relative;
+      user-select: none;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 28px rgba(240, 98, 146, 0.18);
+      border-color: var(--pink);
+    }
+    .card:active { transform: scale(0.97); }
+    .card-num {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--pink);
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+    .card-icon { font-size: 30px; margin-bottom: 8px; line-height: 1; }
+    .card-title { font-size: 14px; font-weight: 700; line-height: 1.35; margin-bottom: 6px; }
+    .card-short { font-size: 11px; color: var(--text-light); line-height: 1.45; }
+    .cat-tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+    /* category colors */
+    .cat-medical   .cat-tag { background: #FCE4EC; color: #C2185B; }
+    .cat-financial .cat-tag { background: #E8F5E9; color: #2E7D32; }
+    .cat-service   .cat-tag { background: #E8EAF6; color: #3949AB; }
+    .cat-transport .cat-tag { background: #FFF3E0; color: #E65100; }
+    .cat-misc      .cat-tag { background: #F3E5F5; color: #6A1B9A; }
+
+    /* category colors */
+    .cat-community .cat-tag { background: #E0F2F1; color: #00695C; }
+
+    /* left border accent */
+    .cat-medical   { border-left: 3px solid #F06292; }
+    .cat-financial { border-left: 3px solid #66BB6A; }
+    .cat-service   { border-left: 3px solid #7986CB; }
+    .cat-transport { border-left: 3px solid #FFA726; }
+    .cat-misc      { border-left: 3px solid #BA68C8; }
+    .cat-community { border-left: 3px solid #26A69A; }
+
+    /* community card hover */
+    .cat-community:hover { box-shadow: 0 10px 28px rgba(38, 166, 154, 0.18); border-color: #26A69A; }
+    .cat-community .card-num { color: #26A69A; }
+
+    /* ── MODAL OVERLAY ── */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+      align-items: flex-end;
+      justify-content: center;
+      backdrop-filter: blur(2px);
+    }
+    .overlay.open { display: flex; }
+
+    /* ── MODAL SHEET ── */
+    .sheet {
+      background: white;
+      border-radius: 26px 26px 0 0;
+      width: 100%;
+      max-width: 640px;
+      max-height: 88vh;
+      overflow-y: auto;
+      animation: slideUp 0.28s cubic-bezier(.32,.72,0,1);
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); opacity: 0.5; }
+      to   { transform: translateY(0);    opacity: 1;   }
+    }
+    .sheet-handle-row {
+      display: flex;
+      justify-content: center;
+      padding: 12px 0 0;
+    }
+    .sheet-handle {
+      width: 38px; height: 4px;
+      background: #ddd;
+      border-radius: 2px;
+    }
+
+    .sheet-header {
+      padding: 14px 20px 16px;
+      border-bottom: 1px solid #F8BBD0;
+      position: sticky;
+      top: 0;
+      background: white;
+      z-index: 1;
+    }
+    .sheet-header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .sheet-meta { font-size: 11px; font-weight: 800; color: var(--pink); letter-spacing: 0.5px; margin-bottom: 6px; }
+    .sheet-title-row { display: flex; align-items: center; gap: 10px; }
+    .sheet-icon { font-size: 34px; line-height: 1; }
+    .sheet-title { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+    .close-btn {
+      width: 30px; height: 30px;
+      border: none; border-radius: 50%;
+      background: #f0f0f0;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: #666; flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .close-btn:hover { background: #e0e0e0; }
+
+    /* ── MODAL BODY ── */
+    .sheet-body { padding: 20px; }
+    .section { margin-bottom: 20px; }
+    .sec-label {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--pink);
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .sec-label::before {
+      content: '';
+      display: inline-block;
+      width: 3px; height: 13px;
+      background: var(--pink);
+      border-radius: 2px;
+    }
+    .sec-content { font-size: 14px; line-height: 1.75; color: #333; }
+    .sec-list { list-style: none; padding: 0; }
+    .sec-list li {
+      padding: 5px 0 5px 18px;
+      position: relative;
+      font-size: 14px;
+      line-height: 1.55;
+      color: #333;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    .sec-list li:last-child { border-bottom: none; }
+    .sec-list li::before {
+      content: '→';
+      position: absolute; left: 0;
+      color: var(--pink); font-weight: 700;
+      font-size: 12px; top: 6px;
+    }
+    .amount-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #EC407A, #F48FB1);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 14px;
+      font-weight: 800;
+      font-size: 16px;
+    }
+    .tip-box {
+      background: #FFF8FA;
+      border: 1.5px solid #F8BBD0;
+      border-left: 4px solid var(--pink);
+      border-radius: 0 12px 12px 0;
+      padding: 12px 14px;
+      font-size: 13px;
+      line-height: 1.65;
+      color: #444;
+    }
+    .tip-box strong { color: var(--pink); }
+    .warn-box {
+      background: #FFFDE7;
+      border: 1.5px solid #FDD835;
+      border-left: 4px solid #F9A825;
+      border-radius: 0 12px 12px 0;
+      padding: 12px 14px;
+      font-size: 13px;
+      line-height: 1.65;
+      color: #555;
+    }
+
+    /* ── FOOTER ── */
+    /* community section divider in grid */
+    .community-divider {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0 4px;
+    }
+    .community-divider span {
+      font-size: 12px;
+      font-weight: 800;
+      color: #26A69A;
+      white-space: nowrap;
+    }
+    .community-divider::before, .community-divider::after {
+      content: '';
+      flex: 1;
+      height: 1.5px;
+      background: linear-gradient(to right, #B2DFDB, transparent);
+    }
+    .community-divider::before { background: linear-gradient(to right, transparent, #B2DFDB); }
+
+    footer {
+      text-align: center;
+      padding: 24px 20px;
+      font-size: 11px;
+      color: #bbb;
+      line-height: 1.8;
+    }
+    footer a { color: #F06292; text-decoration: none; }
+
+    /* ── EMPTY STATE ── */
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: #ccc;
+      font-size: 14px;
+    }
+    .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🤰 임산부 혜택 완전정복</h1>
+  <p>알면 알수록 챙길 수 있는 혜택들을 한눈에 정리했어요</p>
+  <div class="badge-row">
+    <span class="badge">📅 2026년 기준</span>
+    <span class="badge">📋 총 25가지</span>
+    <span class="badge">🎥 돈시육아 참고</span>
+  </div>
+</header>
+
+<div class="filter-bar">
+  <button class="filter-btn active" data-cat="all">전체 25</button>
+  <button class="filter-btn" data-cat="medical">🏥 의료·건강</button>
+  <button class="filter-btn" data-cat="financial">💰 재정·바우처</button>
+  <button class="filter-btn" data-cat="service">🛎 서비스</button>
+  <button class="filter-btn" data-cat="transport">🚆 교통·할인</button>
+  <button class="filter-btn" data-cat="misc">✨ 기타혜택</button>
+  <button class="filter-btn" data-cat="community">💬 커뮤니티 꿀팁</button>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<footer>
+  마지막 업데이트: 2026-06-09 &nbsp;·&nbsp; 출처: 돈시육아 유튜브 + 반값보험료만들기 유튜브 + 임산부 커뮤니티 대화방<br>
+  <span style="font-size:10px">정보는 변경될 수 있으니 신청 전 반드시 해당 기관에 확인하세요. 커뮤니티 꿀팁은 개인 경험담 기반이에요.</span>
+</footer>
+
+<!-- Modal -->
+<div class="overlay" id="overlay">
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle-row"><div class="sheet-handle"></div></div>
+    <div class="sheet-header">
+      <div class="sheet-header-top">
+        <div>
+          <div class="sheet-meta" id="modalMeta"></div>
+          <div class="sheet-title-row">
+            <span class="sheet-icon" id="modalIcon"></span>
+            <span class="sheet-title" id="modalTitle"></span>
+          </div>
+        </div>
+        <button class="close-btn" id="closeBtn">✕</button>
+      </div>
+    </div>
+    <div class="sheet-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+const data = [
+  {
+    id:'01', title:'임신확인서 받기', cat:'medical', icon:'📋', catLabel:'의료·건강',
+    short:'임신 4~7주, 건강보험 임산부 등록',
+    sections:[
+      { label:'시기', text:'임신 4~7주 차' },
+      { label:'절차', list:['산부인과 방문 → 임신확인서 발급', '국민건강보험에 임산부 등록'] },
+      { label:'꿀팁 💡', tip:'임신확인서 사진을 꼭 저장해두세요! 국민행복카드·보건소·각종 혜택 신청 시 여러 곳에 제출할 일이 많습니다.' }
+    ]
+  },
+  {
+    id:'02', title:'산후조리원 예약', cat:'service', icon:'🏨', catLabel:'서비스',
+    short:'빠를수록 유리, 예약금 환불 가능',
+    sections:[
+      { label:'시기', text:'임신 초기부터 (5주차에 예약하는 경우도 있음 — 빠를수록 좋음)' },
+      { label:'선택 기준', list:['집과의 근접성 (산모 체력 고려)', '가격', '시설·프로그램·식단'] },
+      { label:'꿀팁 💡', tip:'예약금은 환불 가능! 일단 예약해두고 나중에 변경하는 것도 방법입니다. 2025년 상반기 서울/경기 조리원 명단+가격은 유튜브 더보기 링크를 확인하세요.' }
+    ]
+  },
+  {
+    id:'03', title:'국민행복카드 신청', cat:'financial', icon:'💳', catLabel:'재정·바우처',
+    short:'국가 바우처가 모이는 카드, 임신 직후 신청',
+    sections:[
+      { label:'신청처', list:['병원 내 카드 부스', '카드사 지점 직접 방문', '온라인: 베베폼·미즈톡톡·베팡'] },
+      { label:'사용처', list:['임신·출산 진료비 바우처', '첫만남이용권', '산후관리사 서비스', '어린이집 비용'] },
+      { label:'꿀팁 💡', tip:'임신 사실을 알게 되면 바로 신청하세요. 이 카드 하나에 정부 바우처가 전부 적립됩니다!' }
+    ]
+  },
+  {
+    id:'04', title:'첫만남이용권', cat:'financial', icon:'🎁', catLabel:'재정·바우처',
+    short:'첫째 200만원 / 둘째 이상 300만원',
+    sections:[
+      { label:'지원 금액', amount:'첫째 200만원 / 둘째 이상 300만원' },
+      { label:'적용 기준', text:'2024년 1월 1일 이후 출생 자녀' },
+      { label:'사용 가능', text:'전 업종 거의 가능 (카지노·마사지·성인업종 제외)' },
+      { label:'⚠️ 주의', warn:'조리원 비용을 첫만남이용권으로 결제하면 연말정산 소득공제(최대 200만원) 적용 불가!' },
+      { label:'꿀팁 💡', tip:'조리원 비용 = 지역화폐 200만원 먼저 결제 → 나머지는 첫만남이용권 사용\n→ 소득공제 + 지역화폐 할인 동시에 챙기기 가능!' }
+    ]
+  },
+  {
+    id:'05', title:'임신·출산 진료비 지원', cat:'medical', icon:'💊', catLabel:'의료·건강',
+    short:'100만원 바우처, 출산 후 2년까지 사용',
+    sections:[
+      { label:'지원 금액', amount:'100만원 (쌍둥이 140만원 / 세 태아 이상: 태아당 100만원 추가)' },
+      { label:'사용 대상', list:['임신·출산 관련 진료비', '임신·출산 관련 약제비', '2세 미만 영유아 진료비'] },
+      { label:'사용 기간', text:'출산 후 2년까지' },
+      { label:'꿀팁 💡', tip:'아기 태어난 후 소아과 진료비에도 쓸 수 있어요! 국민행복카드에 적립되어 사용합니다.' }
+    ]
+  },
+  {
+    id:'06', title:'보건소 방문', cat:'medical', icon:'🏥', catLabel:'의료·건강',
+    short:'엽산·철분제 무료, KTX 40% 할인',
+    sections:[
+      { label:'지원 물품', list:['엽산제 — 임신 초기 3개월까지', '철분제 — 임신 16주부터', '임신 축하 선물'] },
+      { label:'검사·쿠폰', list:['기형아 검사 쿠폰 지원', '임산부 무료 건강검진'] },
+      { label:'교통 할인 🚆', list:['KTX: 특실을 일반가로 이용 / 일반실 40% 할인 (동반 1인 포함)', 'SRT: 30% 할인 (동반 1인 포함)'] },
+      { label:'꿀팁 💡', tip:'보건소 방문이 어려우면 인터넷으로도 신청 가능! 엽산제·철분제 외에도 지역별로 추가 혜택이 있으니 꼭 확인해보세요.' }
+    ]
+  },
+  {
+    id:'07', title:'산후관리사 서비스', cat:'service', icon:'👩‍⚕️', catLabel:'서비스',
+    short:'출산 예정일 40일 전부터 신청 가능',
+    sections:[
+      { label:'신청 시기', text:'출산 예정일 40일 전 ~ 출산일로부터 30일 이내' },
+      { label:'신청처', list:['복지로 (bokjiro.go.kr)', '지역 보건소', '사회서비스전자바우처 ☎ 1566-3232'] },
+      { label:'꿀팁 💡', tip:'미리 업체를 조사해두세요! 인기 업체는 예약이 빨리 차기 때문에 신청 전에 원하는 곳을 정해두는 게 좋아요.' }
+    ]
+  },
+  {
+    id:'08', title:'우체국 엄마보험 (무료)', cat:'medical', icon:'📮', catLabel:'의료·건강',
+    short:'22주 이내 신청, 자녀 희귀질환 10년 보장',
+    sections:[
+      { label:'대상', text:'17~45세, 임신 22주 이내 임산부' },
+      { label:'보장 내용', text:'자녀 희귀질환 10년간 무료 보장' },
+      { label:'신청', list:['전국 우체국 방문', '우체국보험 홈페이지', '우체국보험 앱'] },
+      { label:'꿀팁 💡', tip:'완전 무료입니다! 임신 22주 이전에 꼭 신청하세요. 만약 자녀에게 희귀질환이 생겼을 때 큰 도움이 됩니다.' }
+    ]
+  },
+  {
+    id:'09', title:'자동차보험 할인', cat:'transport', icon:'🚗', catLabel:'교통·할인',
+    short:'15~24% 할인, 태아 때 할인율 최고',
+    sections:[
+      { label:'할인율', text:'약 15~24% (임신 중 기준, 보험사마다 상이)' },
+      { label:'적용 기간', text:'임신 때부터 자녀 만 5~7세까지 (아이가 클수록 할인율 감소)' },
+      { label:'신청 방법', text:'본인 가입 보험사에 직접 전화 문의' },
+      { label:'꿀팁 💡', tip:'태아 때 할인율이 가장 높습니다! 임신 사실을 알게 되면 바로 보험사에 연락해서 할인 적용을 받으세요.' }
+    ]
+  },
+  {
+    id:'10', title:'외래진료 경감혜택', cat:'medical', icon:'🩺', catLabel:'의료·건강',
+    short:'본인부담금 20% 감면, 스케일링 5천원대',
+    sections:[
+      { label:'혜택', text:'외래진료 본인부담금 20% 감면' },
+      { label:'확인 서류', list:['산모수첩', '또는 임신확인증 + 신분증'] },
+      { label:'실무 정보', list:['진료비 경감 코드: F015', '바우처 결제 시 개월수: 38개월 입력', '심평원 문의: ☎ 1644-2000'] },
+      { label:'꿀팁 💡', tip:'치과 스케일링도 임산부 할인이 적용되어 5천원대로 받을 수 있어요! 임산부임을 꼭 알리세요.' }
+    ]
+  },
+  {
+    id:'11', title:'친환경 농산물 꾸러미', cat:'service', icon:'🥦', catLabel:'서비스',
+    short:'지자체별 상이, 예산 소진 빠름',
+    sections:[
+      { label:'내용', text:'지자체별로 진행 여부·금액·신청 시기가 모두 다름' },
+      { label:'⚠️ 주의', warn:'예산 소진이 매우 빠름 — 신청 시기를 미리 확인해두지 않으면 놓칠 수 있습니다!' },
+      { label:'문의', text:'지역 행정복지센터 (읍면동 주민센터)' }
+    ]
+  },
+  {
+    id:'12', title:'임신축하금 지원', cat:'financial', icon:'🎊', catLabel:'재정·바우처',
+    short:'지자체·기관별 상이, 아이사랑에서 확인',
+    sections:[
+      { label:'내용', text:'지자체 및 직장·기관별로 지원 금액·조건이 다름' },
+      { label:'확인 방법', text:'아이사랑 사이트 (childcare.go.kr) → 내 지역 맞춤 혜택 조회' },
+      { label:'꿀팁 💡', tip:'아이사랑 사이트에서 지역을 설정하면 받을 수 있는 혜택이 한눈에 나옵니다. 꼭 확인해보세요!' }
+    ]
+  },
+  {
+    id:'13', title:'35세↑ 서울 추가 의료비', cat:'medical', icon:'💰', catLabel:'의료·건강',
+    short:'추가 50만원, 몽땅정보만능키에서 신청',
+    sections:[
+      { label:'대상', text:'35세 이상 + 서울 거주 임산부' },
+      { label:'지원', amount:'추가 50만원 진료비 지원' },
+      { label:'청구 방법', text:'임신 중 본인이 직접 결제한 진료 영수증으로 청구\n※ 아기 병원비 영수증도 포함 가능' },
+      { label:'신청', list:['온라인: 몽땅정보만능키 (seoulchildcare.go.kr)', '오프라인: 지역 보건소 방문'] }
+    ]
+  },
+  {
+    id:'15', title:'태아 실비보험 온라인 가입', cat:'medical', icon:'🛡️', catLabel:'의료·건강',
+    short:'보험다모아로 집에서 무료 비교 가입, 태아 검사 전에!',
+    sections:[
+      { label:'핵심 원칙', list:['태아 실비보험 1개 + 태아보험 1개 = 총 2개 가입', '부모가 건강할 때 진행', '태아 병원 검사(기형아 검사 등) 받기 전에 가입!'] },
+      { label:'가입 방법', list:['보험다모아 접속 (e-insmart.or.kr) — 금융감독원 공공 비교 사이트', '실손의료보험 비교 → 가입유형 "태아" 선택', '임신주수 입력 → 보험사별 보험료 비교 → 온라인 직접 가입'] },
+      { label:'월 보험료 비교 (2024년 기준)', list:['MG손해보험: 약 14,214원 (손해율 97.5%)', '삼성화재: 약 14,514원 (손해율 96.5%)', 'KB손해보험: 약 16,715원 (손해율 109.5%)', '메리츠화재: 약 21,392원 (손해율 104.8%)', '현대해상: 약 20,228원 (손해율 109.3%)'] },
+      { label:'만기 선택', text:'30세 만기 vs 80/100세 만기 — 목적에 맞게 선택\n(실비 특성상 갱신형이 많음)' },
+      { label:'온라인 가입 장점', list:['판매 수수료 없음 (다이렉트 상품)', '설계사 없이 집에서 직접 가입 가능', '보험다모아는 전 보험사 상품을 중립적으로 비교'] },
+      { label:'⚠️ 주의', warn:'태아 병원 검사 결과가 나온 후에는 가입이 거절될 수 있습니다. 기형아 검사·초음파 결과 나오기 전에 가입 완료하세요!' },
+      { label:'꿀팁 💡', tip:'보험다모아에서 손해율이 낮은 보험사 = 지급을 덜 받은 곳 → 손해율 100% 미만 보험사를 선택하는 것이 유리할 수 있어요. 단, 보험료와 보장 내용을 함께 비교하세요!' }
+    ]
+  },
+  // ── 커뮤니티 꿀팁 10개 ──────────────────────────────────────
+  {
+    id:'C1', title:'입덧 극복 꿀팁', cat:'community', icon:'🤢', catLabel:'커뮤니티 꿀팁',
+    short:'잘 넘기는 음식 & 입덧약 종류',
+    sections:[
+      { label:'잘 들어가는 음식', list:['냉면, 수박, 키위, 토마토, 매실', '비빔면, 단호박, 찐감자, 고구마, 바나나', '스테비아 토마토 절임, 매실 음료'] },
+      { label:'기본 원칙', list:['공복 절대 금지 — 빈속이면 위액만 올라와 더 괴로움', '소량씩 자주 먹기', '탄산수 + 매실액 섞으면 소화에 도움', '청포도 액기스 + 탄산수도 효과적'] },
+      { label:'입덧약 종류', list:['디클렉틴 / 이지모닝 / 마미렉틴 등', '효과는 개인차 큼 — 안 들으면 종류 바꿔달라고 요청', '심할 때는 입덧억제제 포함 수액 맞기'] },
+      { label:'꿀팁 💡', tip:'보통 6주차 시작 → 15~17주면 완화. 물이 비릴 때는 보리차·수박·키위로 수분 보충. 유튜브의 무서운 정보는 오히려 독 — 알고리즘 조심!' }
+    ]
+  },
+  {
+    id:'C2', title:'임당(임신성 당뇨) 관리', cat:'community', icon:'🍎', catLabel:'커뮤니티 꿀팁',
+    short:'재검 기준 140, 식단+운동으로 관리 가능',
+    sections:[
+      { label:'기준', text:'공복혈당 기준 140 이상이면 재검. 140~142는 재검 시 낮아지는 경우 많음' },
+      { label:'식단 원칙', list:['탄수화물 완전 끊기 금지 → 케톤 생성으로 태아 뇌손상 위험', '공복도 혈당 상승 → 소량씩 자주 먹기', '단백질 위주 + 현미/늘보리 등 건강한 탄수화물', '사과식초(조미식초 X) 물에 희석 섭취', '올리브유 식전 복용 효과 있다는 경험담'] },
+      { label:'운동', list:['밥 먹고 오르막길 30분 걷기', '수영, 산책 꾸준히'] },
+      { label:'꿀팁 💡', tip:'수면 충분히 자기 + 스트레스 줄이기가 혈당 관리의 핵심. 식이 잘 하면 인슐린 없이도 관리 가능한 경우 많음!' }
+    ]
+  },
+  {
+    id:'C3', title:'임신 중 영양제 가이드', cat:'community', icon:'💊', catLabel:'커뮤니티 꿀팁',
+    short:'비타민D·철분·오메가3 끊는 시기까지',
+    sections:[
+      { label:'필수 3종', list:['엽산 — 임신 초기 필수. 솔가 800mcg, 차병원 1단계 영양제, 보건소 무료 지급', '철분 — 알약보다 액상이 변비 없고 흡수 잘 됨. 보건소 16주부터 무료', '비타민D — 한국인 대부분 부족. 임산부 권장 2000IU (부족 심하면 4000IU까지)'] },
+      { label:'비타민D 제품', list:['써니디 2000, 닥터썬', '나우푸드 D3&K2 (1000IU 2알)', '마미앤대디, 고려은단 비타민C+D'] },
+      { label:'⚠️ 오메가3 주의', warn:'출산 한두 달 전 반드시 끊기! 혈액 응고를 방해해 출산 시 출혈 위험 증가.' },
+      { label:'기타', list:['이노시톨: 다낭성 난소증후군에 도움, 난자 질 개선', '임신 중 프로틴: 말토덱스트린 적은 제품 가능', '종합영양제 퍼스트맘2: 철분 함량 높아 추천'] },
+      { label:'꿀팁 💡', tip:'비타민C 고함량(3000mg 이상)은 피하고, 빈속 복용 금지. 성분이 같다면 저렴한 브랜드도 OK!' }
+    ]
+  },
+  {
+    id:'C4', title:'태아보험 가입 타이밍', cat:'community', icon:'⏰', catLabel:'커뮤니티 꿀팁',
+    short:'12주 이전 & 기형아 검사 전이 핵심!',
+    sections:[
+      { label:'황금 타이밍', text:'임신 12주 이전 + 기형아 검사(니프티 등) 받기 전 가입 완료!', },
+      { label:'왜 중요한가', list:['기형아 검사 결과 나온 후 → 특약 대거 빠지거나 거절 가능', '니프티 예약만 잡혀있어도 특약 빠지는 경우 있음', '검사 전 가입해야 최대 보장 가능'] },
+      { label:'가입 플랜', list:['태아 실비보험 1개 + 태아보험 1개 = 총 2개', '설계사 여러 명 만나 공통 내용 확인 후 결정', '적정 보험료: 월 7~12만원 (실비 포함)'] },
+      { label:'주의', list:['쌍둥이(일융모막): 가입 매우 까다로움, 소견서 필요', '시험관 쌍둥이: 20주 정밀검사 결과지 필요 후 가입 가능'] },
+      { label:'꿀팁 💡', tip:'현대해상·삼성화재 많이 이용. 보험다모아(e-insmart.or.kr)로 온라인 가격 비교도 가능. 설계사보다 다이렉트가 보험료 저렴!' }
+    ]
+  },
+  {
+    id:'C5', title:'모성보호시간 (단축근무)', cat:'community', icon:'💼', catLabel:'커뮤니티 꿀팁',
+    short:'임신 확인서 제출로 하루 2시간 단축 권리',
+    sections:[
+      { label:'제도 내용', text:'임신 중 근로자는 임신 확인서 제출 시 하루 2시간 단축근무 신청 가능 (법적 권리)' },
+      { label:'신청 방법', list:['임신 확인서 회사 제출', '예정일 변경 시 → 변경된 확인서 재제출하면 날짜 조정 가능'] },
+      { label:'꿀팁', list:['회사에 임밍아웃을 빨리 할수록 단축근무 더 오래 사용 가능', '임산부 뱃지: 초기에 티 안 날 때부터 대중교통에서 착용 권장', '안정기(12주) 또는 1차 기형아 검사 후 공개가 일반적'] },
+      { label:'⚠️ 주의', warn:'5인 이하 사업장은 단축근무 등 일부 법적 혜택이 적용 안 될 수 있습니다. 노무사 상담 권장.' },
+      { label:'꿀팁 💡', tip:'계약직도 육아휴직 가능 (계약 만료일까지 육아휴직으로 대체). 공무원은 최대 3년 육아휴직 가능!' }
+    ]
+  },
+  {
+    id:'C6', title:'아기 용품 우선순위', cat:'community', icon:'🛒', catLabel:'커뮤니티 꿀팁',
+    short:'꼭 새것 vs 중고도 OK 구분법',
+    sections:[
+      { label:'반드시 새것', list:['카시트 — 충격 이력 모름. 안전 관련은 비용 투자 필수', '매트리스 (아기 침대용)'] },
+      { label:'중고 가능', list:['장난감 — 당근마켓으로 받아도 충분', '유축기 — 지인에게 물려받기 가능', '하이체어, 바운서, 바운서'] },
+      { label:'아기 침대 팁', list:['원목 침대: 무겁고 당근 거래 잘 안 됨 주의', '리안 드림콧: 3개월 후 매트리스로 전환 가능 — 가성비 추천', '스토케 원목: 100만원대, 사이즈 작아 오래 못 씀'] },
+      { label:'수유용품', list:['수유쿠션: 높고 탄탄하고 허리벨트 있는 것. 솜 꺼지므로 단단한 제품', '나리몽 밀크박스: 소독기+분유포트+보온쉐이커 올인원'] },
+      { label:'꿀팁 💡', tip:'매트 시공은 이사할 때 가구 없을 때 하는 게 편함. 마루 위에는 떼었다 붙일 수 있는 제품으로!' }
+    ]
+  },
+  {
+    id:'C7', title:'사무직 임산부 필수템', cat:'community', icon:'💻', catLabel:'커뮤니티 꿀팁',
+    short:'직장에서 버티는 실용 아이템 모음',
+    sections:[
+      { label:'필수 아이템', list:['대용량 텀블러 — 수분 충분히 섭취', '발볼 조절 슬리퍼 — 발 부기 대비', '커블 또는 등받이 쿠션 — 장시간 착석 허리 보호', '발 받침대 — 하지 부종 예방'] },
+      { label:'간식 추천', list:['방울토마토 — 비타민, 포만감', '견과류 (아몬드, 칼몬드=아몬드+멸치)', '칼로리 낮고 혈당 안 올리는 간식 위주'] },
+      { label:'튼살 크림', list:['임신 확인 즉시부터 바르기', '배·가슴·팔 안쪽·허벅지까지 꼼꼼히', '일리윤 무향 추천. 오일 섞어 바르면 효과 UP'] },
+      { label:'꿀팁 💡', tip:'자리에서 수시로 일어나 가볍게 걷기. 장시간 앉아있으면 부종 + 혈당 모두 올라가요!' }
+    ]
+  },
+  {
+    id:'C8', title:'임신 중 주의사항', cat:'community', icon:'⚠️', catLabel:'커뮤니티 꿀팁',
+    short:'먹으면 안 되는 것 & 조심해야 할 것',
+    sections:[
+      { label:'음식 주의', list:['굴 — 노로바이러스 위험, 강력 비추천', '마트 포장 초밥/회 — 피하기 (신선한 곳은 의사 소견에 따라 가능)', '연어 — 반드시 익혀 먹기', '수박 과다 — 이뇨작용 강해 자기 전 다량 섭취 금지', '출산 후 미역국: 하루 한 번만 (요오드 과다 시 갑상선 문제)'] },
+      { label:'약·영양제 주의', list:['회충약 임신 중 금지', '비타민C 고함량(3000mg↑) 피하기', '이소티논(여드름약): 임신 계획 시 최소 3개월 전 단약. 복용 후 임신 시 마더세이프 ☎ 1588-7309 상담'] },
+      { label:'시술 주의', list:['레이저 제모 불가 (임신 중)', '면도기 사용 시 각질 관리 필수 (모낭염 주의)', '왁싱: 28주, 32주, 36주 시기에 임산부 전용 샵 방문'] },
+      { label:'운동 주의', list:['경부길이 짧은 분 (2.5cm 이하): 걷기 많이 하면 안 됨', '필라테스 초기: 복부 힘 들어가 계류유산 우려 경험담 있음', '12주 안정기 이후 운동 시작 권장'] },
+      { label:'꿀팁 💡', tip:'오메가3는 출산 1~2달 전 반드시 끊기! 단백뇨는 스트레스·수면 부족으로도 나올 수 있어요.' }
+    ]
+  },
+  {
+    id:'C9', title:'유용한 앱 & 도구', cat:'community', icon:'📱', catLabel:'커뮤니티 꿀팁',
+    short:'임산부 필수 앱 4종 + ChatGPT 활용법',
+    sections:[
+      { label:'임신 관리 앱', list:['프리그넌시 플러스 (Pregnancy+): 주수별 태아 예상 사이즈 확인, 아시아 인종 설정 가능', '베이비빌리: 임신/출산 체크리스트 관리'] },
+      { label:'정보 확인', list:['아이사랑 (childcare.go.kr): 지역별 지원금·혜택 조회', '몽땅정보만능키: 서울 임산부 의료비 신청', '마더세이프 ☎ 1588-7309: 임신 중 약물·화학물질 안전성 상담'] },
+      { label:'ChatGPT 활용', text:'초음파 사진을 올리면 각도법으로 성별 예측 — 맞추는 경우 많음 (공식 확인은 의사에게)' },
+      { label:'국민행복카드 잔액 확인', list:['국민건강보험공단 앱·홈페이지 로그인', '카드사 앱에서 조회', '결제 영수증 하단에도 잔액 표시'] },
+      { label:'꿀팁 💡', tip:'유튜브 임신 관련 알고리즘은 불안한 영상 많이 뜸 — 필요한 정보만 검색하고, 무서운 영상은 최대한 피하세요!' }
+    ]
+  },
+  {
+    id:'C10', title:'임신 중 운동 & 건강관리', cat:'community', icon:'🌿', catLabel:'커뮤니티 꿀팁',
+    short:'수영 적극 추천, 12주 이후부터 시작',
+    sections:[
+      { label:'추천 운동', list:['수영 — 임산부에게 가장 좋음. 몸에 무리 없고 부종 완화', '산책 — 꾸준히 하면 순산에 도움. 우울감·무기력 완화', '밥 먹고 30분 걷기 — 혈당 관리에 특히 효과적'] },
+      { label:'시작 시기', text:'임신 초기(~12주)는 쉬다가 안정기(12주) 이후 운동 시작 권장' },
+      { label:'건강 관리', list:['수면 충분히 — 혈당·면역 모두 중요', '변비: 유산균 복용, 철분 알약 → 액상으로 교체', '부종: 물 충분히 마시기, 오버나이트 오트밀로 아침 식사'] },
+      { label:'오버나이트 오트밀', text:'그릭요거트 + 오트밀 + 블루베리 + 알룰로스 + 두유 → 전날 밤 준비, 아침에 바로 먹기. 혈당 안정 + 편리함' },
+      { label:'꿀팁 💡', tip:'릴렉신 호르몬 분비로 온몸 관절·뼈 통증은 정상 임신 증상. 호르몬 변화로 이유 없는 눈물·우울도 정상 — 남편에게 미리 알리고 도움 요청하세요!' }
+    ]
+  },
+  // ────────────────────────────────────────────────────────────
+  {
+    id:'14', title:'기타 혜택', cat:'misc', icon:'✨', catLabel:'기타혜택',
+    short:'성심당·공항 패스트트랙·궁궐 무료입장',
+    sections:[
+      { label:'성심당 (대전)', list:['임산부 + 동반 1인 줄 없이 입장', '현장 결제 시 5% 할인'] },
+      { label:'인천·김포 공항 패스트트랙', list:['임산부 + 만 7세 이하 유아 동반 가족 이용 가능', '동반 최대 3인', '김포공항 문의: ☎ 02-2660-2478'] },
+      { label:'궁궐·왕릉 무료입장', list:['경복궁·창덕궁·창경궁·덕수궁·종묘·조선왕릉', '임산부 + 보호자 1인 무료'] }
+    ]
+  }
+];
+
+// ── render grid ──────────────────────────────────────────
+function renderGrid(cat) {
+  const grid = document.getElementById('grid');
+  const items = cat === 'all' ? data : data.filter(d => d.cat === cat);
+  if (!items.length) {
+    grid.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div>해당 항목이 없습니다.</div>';
+    return;
+  }
+  let html = '';
+  let communityDividerAdded = false;
+  items.forEach(d => {
+    if (cat === 'all' && d.cat === 'community' && !communityDividerAdded) {
+      html += `<div class="community-divider"><span>💬 커뮤니티 꿀팁 (임산부 대화방 추출)</span></div>`;
+      communityDividerAdded = true;
+    }
+    const numLabel = d.id.startsWith('C') ? `커뮤니티 팁 ${d.id}` : `혜택 No.${d.id}`;
+    html += `
+      <div class="card cat-${d.cat}" onclick="openModal('${d.id}')" role="button" tabindex="0" aria-label="${d.title} 상세보기">
+        <div class="card-num">${numLabel}</div>
+        <div class="card-icon">${d.icon}</div>
+        <div class="card-title">${d.title}</div>
+        <div class="card-short">${d.short}</div>
+        <span class="cat-tag">${d.catLabel}</span>
+      </div>`;
+  });
+  grid.innerHTML = html;
+  grid.querySelectorAll('.card').forEach(c => {
+    c.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') c.click(); });
+  });
+}
+
+// ── filter ───────────────────────────────────────────────
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderGrid(btn.dataset.cat);
+  });
+});
+
+// ── modal ────────────────────────────────────────────────
+function openModal(id) {
+  const d = data.find(x => x.id === id);
+  if (!d) return;
+
+  document.getElementById('modalMeta').textContent = `혜택 No.${d.id} · ${d.catLabel}`;
+  document.getElementById('modalIcon').textContent = d.icon;
+  document.getElementById('modalTitle').textContent = d.title;
+
+  const body = document.getElementById('modalBody');
+  body.innerHTML = d.sections.map(s => {
+    let inner = '';
+    if (s.amount) {
+      inner = `<div class="amount-chip">💵 ${s.amount}</div>`;
+    } else if (s.tip) {
+      inner = `<div class="tip-box">💡 ${s.tip.replace(/\n/g,'<br>')}</div>`;
+    } else if (s.warn) {
+      inner = `<div class="warn-box">⚠️ ${s.warn}</div>`;
+    } else if (s.list) {
+      inner = `<ul class="sec-list">${s.list.map(li => `<li>${li}</li>`).join('')}</ul>`;
+    } else {
+      inner = `<div class="sec-content">${(s.text||'').replace(/\n/g,'<br>')}</div>`;
+    }
+    return `<div class="section"><div class="sec-label">${s.label}</div>${inner}</div>`;
+  }).join('');
+
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('overlay')) closeModal();
+});
+document.getElementById('closeBtn').addEventListener('click', closeModal);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ── init ─────────────────────────────────────────────────
+renderGrid('all');
+</script>
+</body>
+</html>

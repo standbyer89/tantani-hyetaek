@@ -153,7 +153,7 @@
       inset: 0;
       background: rgba(0,0,0,0.45);
       z-index: 200;
-      align-items: flex-end;
+      align-items: center;
       justify-content: center;
       backdrop-filter: blur(2px);
     }
@@ -162,19 +162,24 @@
     /* ── MODAL SHEET ── */
     .sheet {
       background: white;
-      border-radius: 26px 26px 0 0;
-      width: 100%;
+      border-radius: 20px;
+      width: 92%;
+      margin: 0 auto;
       max-width: 640px;
-      max-height: 88vh;
+      max-height: 85vh;
       overflow-y: auto;
-      animation: slideUp 0.28s cubic-bezier(.32,.72,0,1);
+      animation: popIn 0.28s ease;
     }
     @keyframes slideUp {
       from { transform: translateY(100%); opacity: 0.5; }
       to   { transform: translateY(0);    opacity: 1;   }
     }
+    @keyframes popIn {
+      from { transform: scale(0.95); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
     .sheet-handle-row {
-      display: flex;
+      display: none;
       justify-content: center;
       padding: 12px 0 0;
     }
@@ -498,6 +503,14 @@
     .cmp-table li { font-size: 12px; line-height: 1.5; color: #444; padding: 7px 7px 7px 15px; position: relative; border-bottom: 1px solid #f5f5f5; }
     .cmp-table li::before { content: '·'; position: absolute; left: 5px; color: #aaa; font-weight: 700; }
     .cmp-table li:last-child { border-bottom: none; }
+
+    /* ── ONBOARDING OVERLAY ── */
+    .onboard-card { background:#fff; border-radius:22px; max-width:330px; width:88%; margin:0 auto; padding:26px 22px 20px; text-align:center; animation:popIn 0.3s ease; }
+    .onboard-btns { display:grid; gap:8px; }
+    .onboard-btns button { padding:13px; border:1.5px solid #F8BBD0; border-radius:12px; background:#FFF8FA; font-size:14px; font-weight:700; color:#C2185B; cursor:pointer; font-family:inherit; transition:background .15s; }
+    .onboard-btns button:hover { background:#FCE4EC; }
+    .onboard-btns button:active { transform:scale(.98); }
+    .onboard-skip { margin-top:14px; background:none; border:none; color:#bbb; font-size:12px; cursor:pointer; text-decoration:underline; font-family:inherit; }
   </style>
 </head>
 <body>
@@ -548,6 +561,23 @@
   📚 주제별 정보 출처: 우리동산·산소형제TV·난임닥터비커밍(산부인과 전문의) + 해쭈·종지부부(임산부 유튜버) + 임산부 커뮤니티<br>
   <span style="font-size:10px">정보는 변경될 수 있으니 신청 전 반드시 해당 기관에 확인하세요. 주제별 정보의 커뮤니티·유튜버 내용은 참고용이며, 의학적 판단은 반드시 전문의와 상담하세요.</span>
 </footer>
+
+<!-- Onboarding -->
+<div class="overlay" id="onboardOverlay">
+  <div class="onboard-card">
+    <div style="font-size:32px;margin-bottom:6px;">🤰</div>
+    <div style="font-size:18px;font-weight:800;margin-bottom:4px;">몇 주차이신가요?</div>
+    <div style="font-size:12px;color:#999;margin-bottom:18px;">선택하면 딱 맞는 정보만 추천해드려요</div>
+    <div class="onboard-btns">
+      <button onclick="setStage('prep')">🌱 임신 준비 중</button>
+      <button onclick="setStage('early')">🐣 초기 · 1~13주</button>
+      <button onclick="setStage('mid')">🌿 중기 · 14~27주</button>
+      <button onclick="setStage('late')">🌸 후기 · 28~40주</button>
+      <button onclick="setStage('post')">🤱 출산 후</button>
+    </div>
+    <button class="onboard-skip" onclick="setStage('all')">나중에 · 전체 보기</button>
+  </div>
+</div>
 
 <!-- Modal -->
 <div class="overlay" id="overlay">
@@ -1384,15 +1414,46 @@ function renderGrid(cat) {
   });
 }
 
+// ── stage globals ─────────────────────────────────────────
+const STAGE_GROUPS = { prep:['준비','생활'], early:['초기','생활'], mid:['중기','생활'], late:['후기','출산','생활'], post:['산후','생활'] };
+const STAGE_LABEL = { prep:'🌱 임신 준비', early:'🐣 임신 초기 (1~13주)', mid:'🌿 임신 중기 (14~27주)', late:'🌸 임신 후기 (28~40주)', post:'🤱 출산 후' };
+function setStage(stage) {
+  localStorage.setItem('myStage', stage);
+  document.getElementById('onboardOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+  switchTab('topic');
+  renderTopic(stage === 'all' ? 'all' : 'rec');
+}
+function changeStage() {
+  document.getElementById('onboardOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
 // ── render topic ──────────────────────────────────────────
-function renderTopic(group) {
+function renderTopic(filterKey) {
   const view = document.getElementById('topicView');
-  const groups = [['준비','🌱 임신 준비'],['초기','🐣 임신 초기'],['중기','🌿 임신 중기'],['후기','🌸 임신 후기'],['출산','👶 출산'],['산후','🤱 산후'],['생활','📋 생활·제도']];
-  const filterDefs = [['all','전체'],['준비','🌱 준비'],['초기','🐣 초기'],['중기','🌿 중기'],['후기','🌸 후기'],['출산','👶 출산'],['산후','🤱 산후'],['생활','📋 생활·제도']];
-  const g = group || 'all';
+  const allGroups = [['준비','🌱 임신 준비'],['초기','🐣 임신 초기'],['중기','🌿 임신 중기'],['후기','🌸 임신 후기'],['출산','👶 출산'],['산후','🤱 산후'],['생활','📋 생활·제도']];
+  const myStage = localStorage.getItem('myStage');
+  const hasRec = myStage && myStage !== 'all' && STAGE_GROUPS[myStage];
+  let key = filterKey || (hasRec ? 'rec' : 'all');
+  let showKeys;
+  if (key === 'rec' && hasRec) showKeys = STAGE_GROUPS[myStage];
+  else if (key === 'all' || key === 'rec') showKeys = allGroups.map(g => g[0]);
+  else showKeys = [key];
+  const filters = [];
+  if (hasRec) filters.push(['rec','✨ 내 추천']);
+  filters.push(['all','전체']);
+  allGroups.forEach(([k,l]) => filters.push([k,l]));
+  let recBanner = '';
+  if (key === 'rec' && hasRec) {
+    recBanner = `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:#FFF3E0;border:1.5px solid #FFCC80;border-radius:12px;padding:10px 14px;margin:10px 16px 0;font-size:12px;color:#E65100;">
+      <span>✨ <b>${STAGE_LABEL[myStage]}</b> 맞춤 추천</span>
+      <button onclick="changeStage()" style="background:#fff;border:1px solid #FFCC80;border-radius:8px;padding:4px 10px;font-size:11px;color:#E65100;cursor:pointer;font-family:inherit;">주차 변경</button>
+    </div>`;
+  }
   let cards = '';
-  groups.forEach(([k,label]) => {
-    if (g !== 'all' && g !== k) return;
+  allGroups.forEach(([k,label]) => {
+    if (!showKeys.includes(k)) return;
     const items = topicData.filter(d => d.group === k);
     if (!items.length) return;
     cards += `<div class="topic-divider">${label}</div>`;
@@ -1408,7 +1469,8 @@ function renderTopic(group) {
       <div style="font-size:18px;font-weight:800;margin-bottom:4px;">📚 주제별 정보</div>
       <div style="font-size:11px;opacity:0.9;">🩺 의사 · 👤 유튜버 · 💬 커뮤니티를 한 주제에서 나란히 비교</div>
     </div>
-    <div class="filter-bar">${filterDefs.map(([k,l]) => `<button class="filter-btn topic-filter${k===g?' active':''}" data-group="${k}">${l}</button>`).join('')}</div>
+    ${recBanner}
+    <div class="filter-bar">${filters.map(([k,l]) => `<button class="filter-btn topic-filter${k===key?' active':''}" data-group="${k}">${l}</button>`).join('')}</div>
     <div class="grid">${cards}</div>`;
   view.querySelectorAll('.topic-filter').forEach(b => b.addEventListener('click', () => renderTopic(b.dataset.group)));
   view.querySelectorAll('.card').forEach(c => c.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') c.click(); }));
@@ -1738,6 +1800,11 @@ document.getElementById('tabTopic').addEventListener('click',   () => { clearSea
 switchTab('benefit');
 renderGrid('all');
 document.querySelector('.filter-btn[data-cat="all"]').classList.add('active');
+
+if (!localStorage.getItem('myStage')) {
+  document.getElementById('onboardOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
 </script>
 </body>
 </html>

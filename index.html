@@ -514,9 +514,11 @@
     .stage-rail-btn { flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:1px; padding:6px 11px; border:1.5px solid #F8BBD0; border-radius:12px; background:#FFF8FA; font-size:11px; font-weight:700; color:#C2185B; cursor:pointer; font-family:inherit; line-height:1.2; }
     .stage-rail-btn .ic { font-size:17px; }
     .stage-rail-btn.active { background:#7E57C2; color:#fff; border-color:#7E57C2; }
+    .week-select { flex-shrink:0; padding:7px 8px; border:1.5px solid #F8BBD0; border-radius:12px; background:#FFF8FA; font-size:11px; font-weight:700; color:#C2185B; font-family:inherit; cursor:pointer; }
     @media (min-width:1140px) {
       #stageRail { position:fixed; left:10px; top:50%; transform:translateY(-50%); flex-direction:column; overflow:visible; width:64px; padding:10px 6px; border:1.5px solid var(--border); border-bottom:1.5px solid var(--border); border-radius:16px; box-shadow:0 4px 16px rgba(0,0,0,0.06); z-index:50; }
       #stageRail .rail-title { margin:0 0 4px; text-align:center; }
+      #stageRail .week-select { width:100%; box-sizing:border-box; }
     }
   </style>
 </head>
@@ -534,11 +536,13 @@
 
 <div id="stageRail">
   <span class="rail-title">내 임신 시기</span>
+  <button class="stage-rail-btn" data-stage="all" onclick="setStage('all')"><span class="ic">📋</span>전체</button>
   <button class="stage-rail-btn" data-stage="prep" onclick="setStage('prep')"><span class="ic">🌱</span>준비</button>
   <button class="stage-rail-btn" data-stage="early" onclick="setStage('early')"><span class="ic">🐣</span>초기</button>
   <button class="stage-rail-btn" data-stage="mid" onclick="setStage('mid')"><span class="ic">🌿</span>중기</button>
   <button class="stage-rail-btn" data-stage="late" onclick="setStage('late')"><span class="ic">🌸</span>후기</button>
   <button class="stage-rail-btn" data-stage="post" onclick="setStage('post')"><span class="ic">🤱</span>산후</button>
+  <select id="weekSelect" class="week-select" onchange="setWeek(this.value)"><option value="">주차▼</option></select>
 </div>
 
 <div class="search-wrap">
@@ -1421,13 +1425,38 @@ const STAGE_GROUPS = { prep:['준비','생활'], early:['초기','생활'], mid:
 const STAGE_LABEL = { prep:'🌱 임신 준비', early:'🐣 임신 초기 (1~13주)', mid:'🌿 임신 중기 (14~27주)', late:'🌸 임신 후기 (28~40주)', post:'🤱 출산 후' };
 function setStage(stage) {
   localStorage.setItem('myStage', stage);
+  localStorage.removeItem('myWeek');
   updateRail();
   switchTab('topic');
   renderTopic('stage', stage === 'all' ? 'all' : 'rec');
 }
+function setWeek(val) {
+  if (!val) return;
+  const w = parseInt(val, 10);
+  const stage = w <= 13 ? 'early' : (w <= 27 ? 'mid' : 'late');
+  localStorage.setItem('myStage', stage);
+  localStorage.setItem('myWeek', String(w));
+  updateRail();
+  switchTab('topic');
+  renderTopic('stage', 'rec');
+}
 function updateRail() {
   const s = localStorage.getItem('myStage');
+  const w = localStorage.getItem('myWeek');
   document.querySelectorAll('.stage-rail-btn').forEach(b => b.classList.toggle('active', b.dataset.stage === s));
+  const sel = document.getElementById('weekSelect');
+  if (sel) sel.value = w || '';
+}
+function goWeek(w) {
+  switchTab('weekly');
+  setTimeout(function() {
+    document.querySelectorAll('#weeklyView .week-item').forEach(function(it) {
+      const t = it.querySelector('.week-num');
+      if (!t) return;
+      const m = t.textContent.match(/(\d+)\s*~\s*(\d+)/);
+      if (m && w >= +m[1] && w <= +m[2]) { it.classList.add('open'); it.scrollIntoView({ behavior:'smooth', block:'center' }); }
+    });
+  }, 60);
 }
 
 // ── render topic ──────────────────────────────────────────
@@ -1451,7 +1480,10 @@ function renderTopic(axis, filterKey) {
   groups.forEach(([k,l]) => filters.push([k,l]));
   let recBanner = '';
   if (axis === 'stage' && key === 'rec' && hasRec) {
-    recBanner = `<div style="background:#FFF3E0;border:1.5px solid #FFCC80;border-radius:12px;padding:10px 14px;margin:10px 16px 0;font-size:12px;color:#E65100;">✨ <b>${STAGE_LABEL[myStage]}</b> 맞춤 추천 보는 중 — 시기 변경은 '내 임신 시기'에서</div>`;
+    const _w = localStorage.getItem('myWeek');
+    const _label = _w ? `${_w}주차 (${STAGE_LABEL[myStage]})` : STAGE_LABEL[myStage];
+    const _weekBtn = _w ? `<button onclick="goWeek(${_w})" style="background:#fff;border:1px solid #FFCC80;border-radius:8px;padding:4px 10px;font-size:11px;color:#E65100;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;">📅 ${_w}주차 할 일</button>` : '';
+    recBanner = `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:#FFF3E0;border:1.5px solid #FFCC80;border-radius:12px;padding:10px 14px;margin:10px 16px 0;font-size:12px;color:#E65100;"><span>✨ <b>${_label}</b> 맞춤 추천</span>${_weekBtn}</div>`;
   }
   let cards = '';
   groups.forEach(([k,label]) => {
@@ -1806,6 +1838,10 @@ document.getElementById('tabTopic').addEventListener('click',   () => { clearSea
 switchTab('benefit');
 renderGrid('all');
 document.querySelector('.filter-btn[data-cat="all"]').classList.add('active');
+(function() {
+  const sel = document.getElementById('weekSelect');
+  if (sel) { for (let i = 1; i <= 40; i++) { const o = document.createElement('option'); o.value = i; o.textContent = i + '주'; sel.appendChild(o); } }
+})();
 updateRail();
 </script>
 </body>

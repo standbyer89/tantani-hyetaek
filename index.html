@@ -517,19 +517,20 @@
       .rec-topics { flex:1; min-width:0; }
     }
 
-    /* ── STAGE RAIL ── */
-    #stageRail { display:flex; flex-direction:row; align-items:center; gap:6px; overflow-x:auto; padding:10px 14px; background:#fff; border-bottom:1px solid var(--border); scrollbar-width:none; }
-    #stageRail::-webkit-scrollbar { display:none; }
-    .rail-title { flex-shrink:0; font-size:11px; font-weight:700; color:#aaa; margin-right:2px; white-space:nowrap; }
-    .stage-rail-btn { flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:1px; padding:6px 11px; border:1.5px solid #F8BBD0; border-radius:12px; background:#FFF8FA; font-size:11px; font-weight:700; color:#C2185B; cursor:pointer; font-family:inherit; line-height:1.2; }
-    .stage-rail-btn .ic { font-size:17px; }
-    .stage-rail-btn.active { background:#7E57C2; color:#fff; border-color:#7E57C2; }
-    .week-select { flex-shrink:0; padding:7px 8px; border:1.5px solid #F8BBD0; border-radius:12px; background:#FFF8FA; font-size:11px; font-weight:700; color:#C2185B; font-family:inherit; cursor:pointer; }
-    @media (min-width:1140px) {
-      #stageRail { position:fixed; left:10px; top:50%; transform:translateY(-50%); flex-direction:column; overflow:visible; width:64px; padding:10px 6px; border:1.5px solid var(--border); border-bottom:1.5px solid var(--border); border-radius:16px; box-shadow:0 4px 16px rgba(0,0,0,0.06); z-index:50; }
-      #stageRail .rail-title { margin:0 0 4px; text-align:center; }
-      #stageRail .week-select { width:100%; box-sizing:border-box; }
-    }
+    /* ── STAGE BAR (week slider) ── */
+    #stageBar { background:#fff; border-bottom:1px solid var(--border); padding:11px 16px 13px; max-width:960px; margin:0 auto; }
+    .sb-top { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:9px; }
+    .sb-title { font-size:12px; font-weight:800; color:#7E57C2; }
+    .sb-readout { font-size:12px; font-weight:700; color:#E65100; background:#FFF3E0; padding:3px 10px; border-radius:10px; }
+    .sb-quick { margin-left:auto; display:flex; gap:5px; }
+    .sb-quick button { padding:5px 9px; border:1.5px solid #F8BBD0; border-radius:10px; background:#FFF8FA; font-size:11px; font-weight:700; color:#C2185B; cursor:pointer; font-family:inherit; }
+    .sb-quick button.active { background:#7E57C2; color:#fff; border-color:#7E57C2; }
+    .sb-segments { display:flex; gap:3px; margin-bottom:4px; }
+    .sb-seg { text-align:center; font-size:10px; font-weight:700; padding:4px 2px; border-radius:6px; white-space:nowrap; }
+    .sb-early { background:#FCE4EC; color:#C2185B; }
+    .sb-mid { background:#E8F5E9; color:#2E7D32; }
+    .sb-late { background:#E3F2FD; color:#1565C0; }
+    #weekSlider { width:100%; accent-color:#7E57C2; cursor:pointer; }
   </style>
 </head>
 <body>
@@ -544,15 +545,22 @@
   </div>
 </header>
 
-<div id="stageRail">
-  <span class="rail-title">내 임신 시기</span>
-  <button class="stage-rail-btn" data-stage="all" onclick="setStage('all')"><span class="ic">📋</span>전체</button>
-  <button class="stage-rail-btn" data-stage="prep" onclick="setStage('prep')"><span class="ic">🌱</span>준비</button>
-  <button class="stage-rail-btn" data-stage="early" onclick="setStage('early')"><span class="ic">🐣</span>초기</button>
-  <button class="stage-rail-btn" data-stage="mid" onclick="setStage('mid')"><span class="ic">🌿</span>중기</button>
-  <button class="stage-rail-btn" data-stage="late" onclick="setStage('late')"><span class="ic">🌸</span>후기</button>
-  <button class="stage-rail-btn" data-stage="post" onclick="setStage('post')"><span class="ic">🤱</span>산후</button>
-  <select id="weekSelect" class="week-select" onchange="setWeek(this.value)"><option value="">주차▼</option></select>
+<div id="stageBar">
+  <div class="sb-top">
+    <span class="sb-title">🤰 내 임신 시기</span>
+    <span class="sb-readout" id="sbReadout">슬라이더로 주차를 선택하세요</span>
+    <span class="sb-quick">
+      <button data-stage="all" onclick="setStage('all')">📋 전체</button>
+      <button data-stage="prep" onclick="setStage('prep')">🌱 준비중</button>
+      <button data-stage="post" onclick="setStage('post')">🤱 출산함</button>
+    </span>
+  </div>
+  <div class="sb-segments">
+    <div class="sb-seg sb-early" style="flex:13">🐣 초기 1~13주</div>
+    <div class="sb-seg sb-mid" style="flex:14">🌿 중기 14~27주</div>
+    <div class="sb-seg sb-late" style="flex:13">🌸 후기 28~40주</div>
+  </div>
+  <input type="range" id="weekSlider" min="1" max="40" value="1" step="1" oninput="onSlide(this.value)" onchange="setWeek(this.value)">
 </div>
 
 <div class="search-wrap">
@@ -1440,6 +1448,12 @@ function setStage(stage) {
   switchTab('topic');
   renderTopic('stage', stage === 'all' ? 'all' : 'rec');
 }
+function onSlide(v) {
+  const w = parseInt(v, 10);
+  const stage = w <= 13 ? 'early' : (w <= 27 ? 'mid' : 'late');
+  const r = document.getElementById('sbReadout');
+  if (r) r.textContent = `${w}주차 · ${STAGE_LABEL[stage]}`;
+}
 function setWeek(val) {
   if (!val) return;
   const w = parseInt(val, 10);
@@ -1453,9 +1467,17 @@ function setWeek(val) {
 function updateRail() {
   const s = localStorage.getItem('myStage');
   const w = localStorage.getItem('myWeek');
-  document.querySelectorAll('.stage-rail-btn').forEach(b => b.classList.toggle('active', b.dataset.stage === s));
-  const sel = document.getElementById('weekSelect');
-  if (sel) sel.value = w || '';
+  document.querySelectorAll('.sb-quick button').forEach(b => b.classList.toggle('active', b.dataset.stage === s));
+  const slider = document.getElementById('weekSlider');
+  const readout = document.getElementById('sbReadout');
+  if (w) {
+    if (slider) slider.value = w;
+    if (readout) readout.textContent = `${w}주차 · ${STAGE_LABEL[s] || ''}`;
+  } else if (s && s !== 'all' && STAGE_LABEL[s]) {
+    if (readout) readout.textContent = STAGE_LABEL[s];
+  } else if (readout) {
+    readout.textContent = '슬라이더로 주차를 선택하세요';
+  }
 }
 function goWeek(w) {
   switchTab('weekly');
@@ -1884,10 +1906,6 @@ document.getElementById('tabTopic').addEventListener('click',   () => { clearSea
 switchTab('benefit');
 renderGrid('all');
 document.querySelector('.filter-btn[data-cat="all"]').classList.add('active');
-(function() {
-  const sel = document.getElementById('weekSelect');
-  if (sel) { for (let i = 1; i <= 40; i++) { const o = document.createElement('option'); o.value = i; o.textContent = i + '주'; sel.appendChild(o); } }
-})();
 updateRail();
 </script>
 </body>

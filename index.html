@@ -520,17 +520,30 @@
     /* ── STAGE BAR (week slider) ── */
     #stageBar { background:#fff; border-bottom:1px solid var(--border); padding:11px 16px 13px; max-width:960px; margin:0 auto; }
     .sb-top { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:9px; }
-    .sb-title { font-size:12px; font-weight:800; color:#7E57C2; }
+    .sb-title { font-size:12px; font-weight:800; color:#7E57C2; white-space:nowrap; }
     .sb-readout { font-size:12px; font-weight:700; color:#E65100; background:#FFF3E0; padding:3px 10px; border-radius:10px; }
-    .sb-quick { margin-left:auto; display:flex; gap:5px; }
-    .sb-quick button { padding:5px 9px; border:1.5px solid #F8BBD0; border-radius:10px; background:#FFF8FA; font-size:11px; font-weight:700; color:#C2185B; cursor:pointer; font-family:inherit; }
+    .sb-quick { display:flex; gap:5px; margin-bottom:9px; }
+    .sb-quick button { padding:5px 9px; border:1.5px solid #F8BBD0; border-radius:10px; background:#FFF8FA; font-size:11px; font-weight:700; color:#C2185B; cursor:pointer; font-family:inherit; white-space:nowrap; }
     .sb-quick button.active { background:#7E57C2; color:#fff; border-color:#7E57C2; }
-    .sb-segments { display:flex; gap:3px; margin-bottom:4px; }
-    .sb-seg { text-align:center; font-size:10px; font-weight:700; padding:4px 2px; border-radius:6px; white-space:nowrap; }
+    .sb-slider-wrap { display:flex; flex-direction:column; gap:6px; }
+    .sb-segments { display:flex; gap:3px; }
+    .sb-seg { text-align:center; font-size:10px; font-weight:700; padding:4px 2px; border-radius:6px; line-height:1.3; }
     .sb-early { background:#FCE4EC; color:#C2185B; }
     .sb-mid { background:#E8F5E9; color:#2E7D32; }
     .sb-late { background:#E3F2FD; color:#1565C0; }
     #weekSlider { width:100%; accent-color:#7E57C2; cursor:pointer; }
+    @media (min-width:1024px) {
+      body { padding-left:152px; }
+      #stageBar { position:fixed; left:0; top:0; bottom:0; width:152px; max-width:none; margin:0; border-right:1px solid var(--border); border-bottom:none; display:flex; flex-direction:column; gap:12px; padding:18px 12px; overflow-y:auto; z-index:60; }
+      #stageBar .sb-top { flex-direction:column; align-items:stretch; gap:6px; margin:0; }
+      #stageBar .sb-readout { text-align:center; }
+      #stageBar .sb-quick { flex-direction:column; gap:6px; margin:0; }
+      #stageBar .sb-quick button { width:100%; }
+      #stageBar .sb-slider-wrap { flex-direction:row-reverse; gap:10px; height:340px; flex:0 0 auto; }
+      #stageBar #weekSlider { writing-mode:vertical-lr; width:12px; height:100%; }
+      #stageBar .sb-segments { flex-direction:column; flex:1; }
+      #stageBar .sb-seg { display:flex; flex-direction:column; align-items:center; justify-content:center; }
+    }
   </style>
 </head>
 <body>
@@ -548,19 +561,21 @@
 <div id="stageBar">
   <div class="sb-top">
     <span class="sb-title">🤰 내 임신 시기</span>
-    <span class="sb-readout" id="sbReadout">슬라이더로 주차를 선택하세요</span>
-    <span class="sb-quick">
-      <button data-stage="all" onclick="setStage('all')">📋 전체</button>
-      <button data-stage="prep" onclick="setStage('prep')">🌱 준비중</button>
-      <button data-stage="post" onclick="setStage('post')">🤱 출산함</button>
-    </span>
+    <span class="sb-readout" id="sbReadout">주차를 선택하세요</span>
   </div>
-  <div class="sb-segments">
-    <div class="sb-seg sb-early" style="flex:13">🐣 초기 1~13주</div>
-    <div class="sb-seg sb-mid" style="flex:14">🌿 중기 14~27주</div>
-    <div class="sb-seg sb-late" style="flex:13">🌸 후기 28~40주</div>
+  <div class="sb-quick">
+    <button data-stage="all" onclick="setStage('all')">📋 전체</button>
+    <button data-stage="prep" onclick="setStage('prep')">🌱 준비중</button>
+    <button data-stage="post" onclick="setStage('post')">🤱 출산함</button>
   </div>
-  <input type="range" id="weekSlider" min="1" max="40" value="1" step="1" oninput="onSlide(this.value)" onchange="setWeek(this.value)">
+  <div class="sb-slider-wrap">
+    <div class="sb-segments">
+      <div class="sb-seg sb-early" style="flex:13">🐣 초기<br>1~13주</div>
+      <div class="sb-seg sb-mid" style="flex:14">🌿 중기<br>14~27주</div>
+      <div class="sb-seg sb-late" style="flex:13">🌸 후기<br>28~40주</div>
+    </div>
+    <input type="range" id="weekSlider" min="1" max="40" value="1" step="1" oninput="onSlide(this.value)" onchange="setWeek(this.value)">
+  </div>
 </div>
 
 <div class="search-wrap">

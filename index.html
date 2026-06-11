@@ -144,6 +144,7 @@
     .cat-topic   { border-left: 3px solid #7E57C2; }
     .cat-topic:hover { box-shadow: 0 10px 28px rgba(126,87,194,0.18); border-color: #7E57C2; }
     .cat-topic .card-num { color: #7E57C2; }
+    .topic-divider { grid-column: 1 / -1; font-size: 13px; font-weight: 800; color: #5E35B1; background: #EDE7F6; padding: 8px 14px; border-radius: 10px; margin: 12px 0 2px; }
 
     /* ── MODAL OVERLAY ── */
     .overlay {
@@ -1386,24 +1387,29 @@ function renderGrid(cat) {
 // ── render topic ──────────────────────────────────────────
 function renderTopic(group) {
   const view = document.getElementById('topicView');
-  const groups = [['all','전체'],['준비','🌱 준비'],['초기','🐣 초기'],['중기','🌿 중기'],['후기','🌸 후기'],['출산','👶 출산'],['산후','🤱 산후'],['생활','📋 생활·제도']];
+  const groups = [['준비','🌱 임신 준비'],['초기','🐣 임신 초기'],['중기','🌿 임신 중기'],['후기','🌸 임신 후기'],['출산','👶 출산'],['산후','🤱 산후'],['생활','📋 생활·제도']];
+  const filterDefs = [['all','전체'],['준비','🌱 준비'],['초기','🐣 초기'],['중기','🌿 중기'],['후기','🌸 후기'],['출산','👶 출산'],['산후','🤱 산후'],['생활','📋 생활·제도']];
   const g = group || 'all';
-  const items = g === 'all' ? topicData : topicData.filter(d => d.group === g);
+  let cards = '';
+  groups.forEach(([k,label]) => {
+    if (g !== 'all' && g !== k) return;
+    const items = topicData.filter(d => d.group === k);
+    if (!items.length) return;
+    cards += `<div class="topic-divider">${label}</div>`;
+    cards += items.map(d => `
+      <div class="card cat-topic" onclick="openModal('${d.id}')" role="button" tabindex="0">
+        <div class="card-icon">${d.icon}</div>
+        <div class="card-title">${d.title}</div>
+        <div class="card-short">${d.short}</div>
+      </div>`).join('');
+  });
   view.innerHTML = `
     <div style="background:linear-gradient(135deg,#7E57C2,#9575CD);color:white;padding:16px 20px;margin-bottom:4px;">
       <div style="font-size:18px;font-weight:800;margin-bottom:4px;">📚 주제별 정보</div>
       <div style="font-size:11px;opacity:0.9;">🩺 의사 · 👤 유튜버 · 💬 커뮤니티를 한 주제에서 나란히 비교</div>
     </div>
-    <div class="filter-bar">${groups.map(([k,l]) => `<button class="filter-btn topic-filter${k===g?' active':''}" data-group="${k}">${l}</button>`).join('')}</div>
-    <div class="grid" id="topicGrid">
-      ${items.map(d => `
-        <div class="card cat-topic" onclick="openModal('${d.id}')" role="button" tabindex="0">
-          <div class="card-num">${d.groupLabel}</div>
-          <div class="card-icon">${d.icon}</div>
-          <div class="card-title">${d.title}</div>
-          <div class="card-short">${d.short}</div>
-        </div>`).join('')}
-    </div>`;
+    <div class="filter-bar">${filterDefs.map(([k,l]) => `<button class="filter-btn topic-filter${k===g?' active':''}" data-group="${k}">${l}</button>`).join('')}</div>
+    <div class="grid">${cards}</div>`;
   view.querySelectorAll('.topic-filter').forEach(b => b.addEventListener('click', () => renderTopic(b.dataset.group)));
   view.querySelectorAll('.card').forEach(c => c.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') c.click(); }));
 }
@@ -1483,22 +1489,23 @@ function renderSearchResults(items, q) {
     grid.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div>검색 결과가 없어요</div>';
     return;
   }
-  grid.innerHTML = items.map(d => {
-    const isTopic = d.id.startsWith('T');
-    const numLabel = isTopic ? d.groupLabel : `혜택 No.${d.id}`;
-    const catTag = isTopic ? '' : `<span class="cat-tag">${d.catLabel}</span>`;
+  const topics = items.filter(d => d.id.startsWith('T'));
+  const benefits = items.filter(d => !d.id.startsWith('T'));
+  const card = d => {
+    const numLabel = d.id.startsWith('T') ? d.groupLabel : `혜택 No.${d.id}`;
     return `
       <div class="card cat-${d.cat}" onclick="openModal('${d.id}')" role="button" tabindex="0">
         <div class="card-num">${numLabel}</div>
         <div class="card-icon">${d.icon}</div>
         <div class="card-title">${highlight(d.title, q)}</div>
-        <div class="card-short">${highlight(d.short, q)}</div>
-        ${catTag}
+        <div class="card-short">${highlight(d.short || '', q)}</div>
       </div>`;
-  }).join('');
-  grid.querySelectorAll('.card').forEach(c => {
-    c.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') c.click(); });
-  });
+  };
+  let html = '';
+  if (topics.length)   html += `<div class="topic-divider">📚 주제별 정보 ${topics.length}건</div>` + topics.map(card).join('');
+  if (benefits.length) html += `<div class="topic-divider" style="background:#FCE4EC;color:#C2185B;">📋 혜택 카드 ${benefits.length}건</div>` + benefits.map(card).join('');
+  grid.innerHTML = html;
+  grid.querySelectorAll('.card').forEach(c => c.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') c.click(); }));
 }
 
 const searchInput = document.getElementById('searchInput');

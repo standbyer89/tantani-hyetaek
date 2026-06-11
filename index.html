@@ -507,6 +507,16 @@
     .axis-btn { flex:1; padding:9px; border:1.5px solid #D1C4E9; border-radius:10px; background:#fff; font-size:13px; font-weight:700; color:#7E57C2; cursor:pointer; font-family:inherit; }
     .axis-btn.active { background:#7E57C2; color:#fff; border-color:#7E57C2; }
 
+    .rec-split { display:flex; flex-direction:column; gap:14px; padding:12px 16px 4px; }
+    .rec-col-title { font-size:14px; font-weight:800; color:#7E57C2; margin-bottom:8px; }
+    .rec-todo { background:#FFF8FA; border:1px solid var(--border); border-radius:14px; padding:14px; }
+    .rec-topics .grid { max-width:none; margin:0; padding:0; }
+    @media (min-width:760px) {
+      .rec-split { flex-direction:row; align-items:flex-start; }
+      .rec-todo { flex:0 0 36%; max-width:36%; }
+      .rec-topics { flex:1; min-width:0; }
+    }
+
     /* ── STAGE RAIL ── */
     #stageRail { display:flex; flex-direction:row; align-items:center; gap:6px; overflow-x:auto; padding:10px 14px; background:#fff; border-bottom:1px solid var(--border); scrollbar-width:none; }
     #stageRail::-webkit-scrollbar { display:none; }
@@ -1459,6 +1469,20 @@ function goWeek(w) {
   }, 60);
 }
 
+// ── recWeekly helper ──────────────────────────────────────
+function recWeekly(stage, week) {
+  const triMap = { early:0, mid:1, late:2 };
+  if (!(stage in triMap) || typeof weeklyData === 'undefined') return [];
+  const tri = weeklyData[triMap[stage]];
+  if (!tri) return [];
+  let weeks = tri.weeks;
+  if (week) {
+    const f = weeks.filter(w => { const m = w.range.match(/(\d+)\s*~\s*(\d+)/); return m && week >= +m[1] && week <= +m[2]; });
+    if (f.length) weeks = f;
+  }
+  return weeks;
+}
+
 // ── render topic ──────────────────────────────────────────
 function renderTopic(axis, filterKey) {
   axis = (axis === 'subject') ? 'subject' : 'stage';
@@ -1466,6 +1490,7 @@ function renderTopic(axis, filterKey) {
   const stageGroups = [['준비','🌱 임신 준비'],['초기','🐣 임신 초기'],['중기','🌿 임신 중기'],['후기','🌸 임신 후기'],['출산','👶 출산'],['산후','🤱 산후'],['생활','📋 생활·제도']];
   const subjectGroups = [['증상','🤢 증상·몸 변화'],['검사','🏥 검사·진료'],['영양','💊 영양·식이'],['위험','⚠️ 위험·합병증'],['분만','👶 분만·출산'],['산후','🤱 산후·수유'],['생활','📋 제도·생활']];
   const myStage = localStorage.getItem('myStage');
+  const myWeek = localStorage.getItem('myWeek');
   const hasRec = myStage && myStage !== 'all' && STAGE_GROUPS[myStage];
   const groups = axis === 'subject' ? subjectGroups : stageGroups;
   const groupField = axis === 'subject' ? 'subject' : 'group';
@@ -1478,12 +1503,11 @@ function renderTopic(axis, filterKey) {
   if (axis === 'stage' && hasRec) filters.push(['rec','✨ 내 추천']);
   filters.push(['all','전체']);
   groups.forEach(([k,l]) => filters.push([k,l]));
+  const isRec = (axis === 'stage' && key === 'rec' && hasRec);
   let recBanner = '';
-  if (axis === 'stage' && key === 'rec' && hasRec) {
-    const _w = localStorage.getItem('myWeek');
-    const _label = _w ? `${_w}주차 (${STAGE_LABEL[myStage]})` : STAGE_LABEL[myStage];
-    const _weekBtn = _w ? `<button onclick="goWeek(${_w})" style="background:#fff;border:1px solid #FFCC80;border-radius:8px;padding:4px 10px;font-size:11px;color:#E65100;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;">📅 ${_w}주차 할 일</button>` : '';
-    recBanner = `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:#FFF3E0;border:1.5px solid #FFCC80;border-radius:12px;padding:10px 14px;margin:10px 16px 0;font-size:12px;color:#E65100;"><span>✨ <b>${_label}</b> 맞춤 추천</span>${_weekBtn}</div>`;
+  if (isRec) {
+    const _label = myWeek ? `${myWeek}주차 (${STAGE_LABEL[myStage]})` : STAGE_LABEL[myStage];
+    recBanner = `<div style="background:#FFF3E0;border:1.5px solid #FFCC80;border-radius:12px;padding:10px 14px;margin:10px 16px 0;font-size:12px;color:#E65100;">✨ <b>${_label}</b> — 할 일과 관련 주제를 함께 모았어요</div>`;
   }
   let cards = '';
   groups.forEach(([k,label]) => {
@@ -1498,6 +1522,28 @@ function renderTopic(axis, filterKey) {
         <div class="card-short">${d.short}</div>
       </div>`).join('');
   });
+  let body;
+  if (isRec) {
+    const wk = recWeekly(myStage, myWeek ? parseInt(myWeek,10) : null);
+    let todo = wk.map(w => `
+      <div style="margin-bottom:10px;">
+        <div style="font-weight:800;font-size:12px;color:var(--pink-dark);background:var(--pink-light);padding:5px 10px;border-radius:8px;margin-bottom:4px;">${w.range} · ${w.title}</div>
+        ${w.tasks.map(t => `<div style="display:flex;gap:6px;padding:5px 2px;font-size:12px;line-height:1.45;border-bottom:1px solid #FFF0F5;"><span style="color:${t.tag==='must'?'#EF5350':'var(--pink)'};flex-shrink:0;">●</span><span>${t.text}</span></div>`).join('')}
+      </div>`).join('');
+    if (!todo) todo = `<div style="font-size:12px;color:#aaa;padding:8px;">이 시기엔 타임라인 할 일이 따로 없어요. 옆의 관련 주제를 확인하세요.</div>`;
+    body = `<div class="rec-split">
+      <div class="rec-todo">
+        <div class="rec-col-title">📅 내 주차 할 일</div>
+        ${todo}
+      </div>
+      <div class="rec-topics">
+        <div class="rec-col-title">📚 관련 주제</div>
+        <div class="grid">${cards}</div>
+      </div>
+    </div>`;
+  } else {
+    body = `<div class="grid">${cards}</div>`;
+  }
   view.innerHTML = `
     <div style="background:linear-gradient(135deg,#7E57C2,#9575CD);color:white;padding:16px 20px;margin-bottom:4px;">
       <div style="font-size:18px;font-weight:800;margin-bottom:4px;">📚 주제별 정보</div>
@@ -1509,7 +1555,7 @@ function renderTopic(axis, filterKey) {
     </div>
     ${recBanner}
     <div class="filter-bar">${filters.map(([k,l]) => `<button class="filter-btn topic-filter${k===key?' active':''}" data-axis="${axis}" data-group="${k}">${l}</button>`).join('')}</div>
-    <div class="grid">${cards}</div>`;
+    ${body}`;
   view.querySelectorAll('.topic-filter').forEach(b => b.addEventListener('click', () => renderTopic(b.dataset.axis, b.dataset.group)));
   view.querySelectorAll('.card').forEach(c => c.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') c.click(); }));
 }

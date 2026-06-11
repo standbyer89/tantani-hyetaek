@@ -511,6 +511,8 @@
     .onboard-btns button:hover { background:#FCE4EC; }
     .onboard-btns button:active { transform:scale(.98); }
     .onboard-skip { margin-top:14px; background:none; border:none; color:#bbb; font-size:12px; cursor:pointer; text-decoration:underline; font-family:inherit; }
+    .axis-btn { flex:1; padding:9px; border:1.5px solid #D1C4E9; border-radius:10px; background:#fff; font-size:13px; font-weight:700; color:#7E57C2; cursor:pointer; font-family:inherit; }
+    .axis-btn.active { background:#7E57C2; color:#fff; border-color:#7E57C2; }
   </style>
 </head>
 <body>
@@ -1392,6 +1394,9 @@ const topicData = [
   }
 ];
 
+const SUBJECT_MAP = { T1:'검사', T2:'검사', T3:'위험', T4:'생활', T5:'증상', T6:'영양', T7:'위험', T8:'위험', T9:'증상', T10:'영양', T11:'증상', T12:'증상', T13:'검사', T14:'위험', T15:'위험', T16:'분만', T17:'분만', T18:'위험', T19:'산후', T20:'산후', T21:'산후', T22:'산후', T23:'영양', T24:'검사', T25:'생활', T26:'생활', T27:'생활', T28:'생활', T29:'생활' };
+topicData.forEach(d => { d.subject = SUBJECT_MAP[d.id]; });
+
 // ── render grid (공식 혜택만) ─────────────────────────────
 function renderGrid(cat) {
   const grid = document.getElementById('grid');
@@ -1422,7 +1427,7 @@ function setStage(stage) {
   document.getElementById('onboardOverlay').classList.remove('open');
   document.body.style.overflow = '';
   switchTab('topic');
-  renderTopic(stage === 'all' ? 'all' : 'rec');
+  renderTopic('stage', stage === 'all' ? 'all' : 'rec');
 }
 function changeStage() {
   document.getElementById('onboardOverlay').classList.add('open');
@@ -1430,31 +1435,32 @@ function changeStage() {
 }
 
 // ── render topic ──────────────────────────────────────────
-function renderTopic(filterKey) {
+function renderTopic(axis, filterKey) {
+  axis = (axis === 'subject') ? 'subject' : 'stage';
   const view = document.getElementById('topicView');
-  const allGroups = [['준비','🌱 임신 준비'],['초기','🐣 임신 초기'],['중기','🌿 임신 중기'],['후기','🌸 임신 후기'],['출산','👶 출산'],['산후','🤱 산후'],['생활','📋 생활·제도']];
+  const stageGroups = [['준비','🌱 임신 준비'],['초기','🐣 임신 초기'],['중기','🌿 임신 중기'],['후기','🌸 임신 후기'],['출산','👶 출산'],['산후','🤱 산후'],['생활','📋 생활·제도']];
+  const subjectGroups = [['증상','🤢 증상·몸 변화'],['검사','🏥 검사·진료'],['영양','💊 영양·식이'],['위험','⚠️ 위험·합병증'],['분만','👶 분만·출산'],['산후','🤱 산후·수유'],['생활','📋 제도·생활']];
   const myStage = localStorage.getItem('myStage');
   const hasRec = myStage && myStage !== 'all' && STAGE_GROUPS[myStage];
-  let key = filterKey || (hasRec ? 'rec' : 'all');
+  const groups = axis === 'subject' ? subjectGroups : stageGroups;
+  const groupField = axis === 'subject' ? 'subject' : 'group';
+  let key = filterKey || ((axis === 'stage' && hasRec) ? 'rec' : 'all');
   let showKeys;
-  if (key === 'rec' && hasRec) showKeys = STAGE_GROUPS[myStage];
-  else if (key === 'all' || key === 'rec') showKeys = allGroups.map(g => g[0]);
+  if (axis === 'stage' && key === 'rec' && hasRec) showKeys = STAGE_GROUPS[myStage];
+  else if (key === 'all' || key === 'rec') showKeys = groups.map(g => g[0]);
   else showKeys = [key];
   const filters = [];
-  if (hasRec) filters.push(['rec','✨ 내 추천']);
+  if (axis === 'stage' && hasRec) filters.push(['rec','✨ 내 추천']);
   filters.push(['all','전체']);
-  allGroups.forEach(([k,l]) => filters.push([k,l]));
+  groups.forEach(([k,l]) => filters.push([k,l]));
   let recBanner = '';
-  if (key === 'rec' && hasRec) {
-    recBanner = `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:#FFF3E0;border:1.5px solid #FFCC80;border-radius:12px;padding:10px 14px;margin:10px 16px 0;font-size:12px;color:#E65100;">
-      <span>✨ <b>${STAGE_LABEL[myStage]}</b> 맞춤 추천</span>
-      <button onclick="changeStage()" style="background:#fff;border:1px solid #FFCC80;border-radius:8px;padding:4px 10px;font-size:11px;color:#E65100;cursor:pointer;font-family:inherit;">주차 변경</button>
-    </div>`;
+  if (axis === 'stage' && key === 'rec' && hasRec) {
+    recBanner = `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:#FFF3E0;border:1.5px solid #FFCC80;border-radius:12px;padding:10px 14px;margin:10px 16px 0;font-size:12px;color:#E65100;"><span>✨ <b>${STAGE_LABEL[myStage]}</b> 맞춤 추천</span><button onclick="changeStage()" style="background:#fff;border:1px solid #FFCC80;border-radius:8px;padding:4px 10px;font-size:11px;color:#E65100;cursor:pointer;font-family:inherit;">주차 변경</button></div>`;
   }
   let cards = '';
-  allGroups.forEach(([k,label]) => {
+  groups.forEach(([k,label]) => {
     if (!showKeys.includes(k)) return;
-    const items = topicData.filter(d => d.group === k);
+    const items = topicData.filter(d => d[groupField] === k);
     if (!items.length) return;
     cards += `<div class="topic-divider">${label}</div>`;
     cards += items.map(d => `
@@ -1469,10 +1475,14 @@ function renderTopic(filterKey) {
       <div style="font-size:18px;font-weight:800;margin-bottom:4px;">📚 주제별 정보</div>
       <div style="font-size:11px;opacity:0.9;">🩺 의사 · 👤 유튜버 · 💬 커뮤니티를 한 주제에서 나란히 비교</div>
     </div>
+    <div style="display:flex;gap:6px;padding:10px 16px 0;">
+      <button class="axis-btn${axis==='stage'?' active':''}" onclick="renderTopic('stage')">📅 시기별</button>
+      <button class="axis-btn${axis==='subject'?' active':''}" onclick="renderTopic('subject')">🏷️ 주제별</button>
+    </div>
     ${recBanner}
-    <div class="filter-bar">${filters.map(([k,l]) => `<button class="filter-btn topic-filter${k===key?' active':''}" data-group="${k}">${l}</button>`).join('')}</div>
+    <div class="filter-bar">${filters.map(([k,l]) => `<button class="filter-btn topic-filter${k===key?' active':''}" data-axis="${axis}" data-group="${k}">${l}</button>`).join('')}</div>
     <div class="grid">${cards}</div>`;
-  view.querySelectorAll('.topic-filter').forEach(b => b.addEventListener('click', () => renderTopic(b.dataset.group)));
+  view.querySelectorAll('.topic-filter').forEach(b => b.addEventListener('click', () => renderTopic(b.dataset.axis, b.dataset.group)));
   view.querySelectorAll('.card').forEach(c => c.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') c.click(); }));
 }
 
